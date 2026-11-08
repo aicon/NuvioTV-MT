@@ -1970,8 +1970,21 @@ internal suspend fun PlayerRuntimeController.resolveAutoInternalPlayerEngine(): 
     val isHdrOrDv = Regex("""(?i)\b(hdr|hdr10\+?|dv|dolby\s*vision)\b""").containsMatchIn(streamMetadataText)
 
     return if (isHdrOrDv) {
+        // Prefer Exo for HDR/DV even when the container looks like AVI.
         InternalPlayerEngine.EXOPLAYER
     } else {
+        // AVI often stutters on ExoPlayer/TV; prefer libmpv when metadata or URL says AVI.
+        if (looksLikeAviContainer(
+                filename = currentFilename,
+                streamName = streamName,
+                streamDescription = currentStreamDescription,
+                streamUrl = currentStreamUrl,
+                metadataText = streamMetadataText
+            )
+        ) {
+            return InternalPlayerEngine.MVP_PLAYER
+        }
+
         val hasAnimeId = currentVideoId?.startsWith("kitsu:") == true ||
                 currentVideoId?.startsWith("mal:") == true ||
                 currentVideoId?.startsWith("anilist:") == true
@@ -1990,6 +2003,31 @@ internal suspend fun PlayerRuntimeController.resolveAutoInternalPlayerEngine(): 
 
         if (isAnime) InternalPlayerEngine.MVP_PLAYER else InternalPlayerEngine.EXOPLAYER
     }
+}
+
+/**
+ * Detect AVI from path/extension, release-name tokens, or mime-like hints — not extension alone.
+ */
+internal fun looksLikeAviContainer(
+    filename: String?,
+    streamName: String?,
+    streamDescription: String?,
+    streamUrl: String?,
+    metadataText: String
+): Boolean {
+    val candidates = listOfNotNull(filename, streamName, streamDescription, streamUrl, metadataText)
+    for (raw in candidates) {
+        val value = raw.trim()
+        if (value.isEmpty()) continue
+        val lower = value.lowercase()
+        if (lower.contains("video/avi") || lower.contains("video/x-msvideo")) return true
+        // Path / URL ending in .avi (ignore query string)
+        val pathOnly = lower.substringBefore('?').substringBefore('#')
+        if (pathOnly.endsWith(".avi")) return true
+        // Release / catalog tokens: "AVI", "XviD", common AVI-era encodes in names
+        if (Regex("""(?i)(?:^|[\s.\-\[(_])avi(?:[\s.\-\])_]|$)""").containsMatchIn(value)) return true
+    }
+    return false
 }
 
 internal fun resolvePreferredAudioLanguages(

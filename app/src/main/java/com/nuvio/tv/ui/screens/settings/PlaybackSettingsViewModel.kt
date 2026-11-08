@@ -105,6 +105,14 @@ class PlaybackSettingsViewModel @Inject constructor(
         playerSettingsDataStore.setAutoSwitchInternalPlayerOnError(enabled)
     }
 
+    suspend fun setAddonPlayerEventsEnabled(enabled: Boolean) {
+        playerSettingsDataStore.setAddonPlayerEventsEnabled(enabled)
+    }
+
+    suspend fun setAddonPlayerProgressIntervalSeconds(seconds: Int) {
+        playerSettingsDataStore.setAddonPlayerProgressIntervalSeconds(seconds)
+    }
+
     suspend fun setExternalPlayerForwardSubtitles(enabled: Boolean) {
         playerSettingsDataStore.setExternalPlayerForwardSubtitles(enabled)
     }

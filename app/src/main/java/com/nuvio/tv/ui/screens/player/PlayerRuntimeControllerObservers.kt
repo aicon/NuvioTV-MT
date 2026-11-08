@@ -406,6 +406,13 @@ internal fun PlayerRuntimeController.observeSubtitleSettings() {
             }
             streamReuseLastLinkEnabled = settings.streamReuseLastLinkEnabled
             autoSwitchInternalPlayerOnErrorEnabled = settings.autoSwitchInternalPlayerOnError
+            addonPlayerEventsEnabled = settings.addonPlayerEventsEnabled
+            addonPlayerProgressIntervalSeconds = settings.addonPlayerProgressIntervalSeconds
+            if (addonPlayerEventsEnabled && isPlaybackCurrentlyPlaying() && !_uiState.value.isPaused) {
+                startAddonPlayerProgressTicker()
+            } else if (!addonPlayerEventsEnabled) {
+                stopAddonPlayerProgressTicker()
+            }
             currentInternalPlayerEngine = resolvedInternalPlayerEngine
             streamAutoPlayModeSetting = settings.streamAutoPlayMode
             streamAutoPlayNextEpisodeEnabledSetting = settings.streamAutoPlayNextEpisodeEnabled

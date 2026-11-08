@@ -38,6 +38,27 @@ internal fun PlaybackPlayerSection(
         onToggle = { onUpdate { setAutoSwitchInternalPlayerOnError(!settings.autoSwitchInternalPlayerOnError) } },
         enabled = !usesExternalPlayer
     )
+    SettingsToggleRow(
+        title = stringResource(R.string.playback_addon_player_events),
+        subtitle = stringResource(R.string.playback_addon_player_events_sub),
+        checked = settings.addonPlayerEventsEnabled,
+        onToggle = { onUpdate { setAddonPlayerEventsEnabled(!settings.addonPlayerEventsEnabled) } },
+        enabled = !usesExternalPlayer
+    )
+    SettingsActionRow(
+        title = stringResource(R.string.playback_addon_player_progress_interval),
+        subtitle = stringResource(R.string.playback_addon_player_progress_interval_sub),
+        value = stringResource(
+            R.string.playback_addon_player_progress_interval_value,
+            settings.addonPlayerProgressIntervalSeconds
+        ),
+        enabled = !usesExternalPlayer && settings.addonPlayerEventsEnabled,
+        onClick = {
+            val options = listOf(15, 30, 60, 120)
+            val next = options.firstOrNull { it > settings.addonPlayerProgressIntervalSeconds } ?: options.first()
+            onUpdate { setAddonPlayerProgressIntervalSeconds(next) }
+        }
+    )
     if (!usesExternalPlayer) {
         SettingsToggleRow(
             title = stringResource(R.string.playback_release_decoder_on_background),

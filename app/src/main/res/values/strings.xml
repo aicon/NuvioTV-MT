@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Nuvio</string>
+    <string name="app_name">Nuvio YT</string>
     <string name="tv_channel_continue_watching">Continue Watching</string>
     <string name="type_movie">Movie</string>
     <string name="type_movies">Movies</string>
@@ -776,6 +776,11 @@
     <string name="playback_engine_mvplayer">Libmpv (Beta)</string>
     <string name="playback_auto_switch_internal_player_on_error">Auto-switch engine on startup error</string>
     <string name="playback_auto_switch_internal_player_on_error_sub">If stream startup fails, switch between ExoPlayer and libmpv automatically.</string>
+    <string name="playback_addon_player_events">Addon player events</string>
+    <string name="playback_addon_player_events_sub">Send start, pause, stop, and progress to installed addons that declare the player resource (e.g. Yamtrack scrobbler).</string>
+    <string name="playback_addon_player_progress_interval">Progress update interval</string>
+    <string name="playback_addon_player_progress_interval_sub">How often to send progress while playing. No updates while paused. Default 30 seconds.</string>
+    <string name="playback_addon_player_progress_interval_value">%1$d seconds</string>
     <string name="playback_release_decoder_on_background">Release decoder in background</string>
     <string name="playback_release_decoder_on_background_sub">Free the video decoder when Nuvio goes to the background. Turn on if playback fails with a decoder error after returning to the app. The player reloads on return, also after the screensaver</string>
     <string name="playback_external_forward_subtitles">Forward subtitles to external player</string>
@@ -803,7 +808,7 @@
     <string name="playback_player_external_desc">Always open streams in an external app</string>
     <string name="playback_player_ask_desc">Choose the player each time</string>
     <string name="playback_player_auto">Auto (Best for Content)</string>
-    <string name="playback_player_auto_desc">ExoPlayer for Movies &amp; TV Shows · MPV for Anime</string>
+    <string name="playback_player_auto_desc">ExoPlayer for Movies &amp; TV Shows · MPV for Anime and AVI</string>
     <string name="playback_engine_exoplayer_desc">Best compatibility with current Nuvio features.</string>
     <string name="playback_engine_mvplayer_desc">Uses libmpv with Nuvio OSD controls. Experimental.</string>
 

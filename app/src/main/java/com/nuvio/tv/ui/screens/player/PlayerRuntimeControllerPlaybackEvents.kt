@@ -1123,6 +1123,8 @@ internal fun PlayerRuntimeController.emitScrobbleStart() {
         }
         hasSentScrobbleStartForCurrentItem = true
         logScrobbleDiagnostic("start_recorded", "requestGeneration=$requestGeneration")
+        emitAddonPlayerEvent("start")
+        startAddonPlayerProgressTicker()
     }
 }
 
@@ -1158,6 +1160,8 @@ internal fun PlayerRuntimeController.emitScrobbleStop(progressPercent: Float? = 
     hasRequestedScrobbleStartForCurrentItem = false
     hasSentScrobbleStartForCurrentItem = false
     logScrobbleDiagnostic("stop_state_reset", "progress=$percent")
+    stopAddonPlayerProgressTicker()
+    emitAddonPlayerEvent("stop")
 }
 
 internal fun PlayerRuntimeController.emitScrobblePause(progressPercent: Float? = null) {
@@ -1193,6 +1197,8 @@ internal fun PlayerRuntimeController.emitScrobblePause(progressPercent: Float? =
     hasRequestedScrobbleStartForCurrentItem = false
     hasSentScrobbleStartForCurrentItem = false
     logScrobbleDiagnostic("pause_state_reset", "progress=$percent")
+    stopAddonPlayerProgressTicker()
+    emitAddonPlayerEvent("pause")
 }
 
 internal fun PlayerRuntimeController.emitCompletionScrobbleStop(progressPercent: Float) {

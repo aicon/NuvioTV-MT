@@ -297,6 +297,10 @@ data class PlayerSettings(
     val playerPreference: PlayerPreference = PlayerPreference.INTERNAL,
     val internalPlayerEngine: InternalPlayerEngine = InternalPlayerEngine.EXOPLAYER,
     val autoSwitchInternalPlayerOnError: Boolean = false,
+    /** Forward Stremio player events to installed addons that declare the player resource. */
+    val addonPlayerEventsEnabled: Boolean = true,
+    /** Progress tick interval while playing (seconds). Pause suppresses ticks. Default 30. */
+    val addonPlayerProgressIntervalSeconds: Int = 30,
     val useLibass: Boolean = true,
     val libassRenderType: LibassRenderType = LibassRenderType.OVERLAY_OPEN_GL,
     val libassRenderScale: LibassRenderScale = LibassRenderScale.FULL,
@@ -623,6 +627,8 @@ class PlayerSettingsDataStore @Inject constructor(
     private val playerPreferenceKey = stringPreferencesKey("player_preference")
     private val internalPlayerEngineKey = stringPreferencesKey("internal_player_engine")
     private val autoSwitchInternalPlayerOnErrorKey = booleanPreferencesKey("auto_switch_internal_player_on_error")
+    private val addonPlayerEventsEnabledKey = booleanPreferencesKey("addon_player_events_enabled")
+    private val addonPlayerProgressIntervalSecondsKey = intPreferencesKey("addon_player_progress_interval_seconds")
     private val useLibassKey = booleanPreferencesKey("use_libass")
     private val libassRenderTypeKey = stringPreferencesKey("libass_render_type")
     private val libassRenderScaleKey = stringPreferencesKey("libass_render_scale")
@@ -998,6 +1004,8 @@ class PlayerSettingsDataStore @Inject constructor(
                     runCatching { InternalPlayerEngine.valueOf(it) }.getOrDefault(InternalPlayerEngine.EXOPLAYER)
                 } ?: InternalPlayerEngine.EXOPLAYER,
                 autoSwitchInternalPlayerOnError = prefs[autoSwitchInternalPlayerOnErrorKey] ?: false,
+                addonPlayerEventsEnabled = prefs[addonPlayerEventsEnabledKey] ?: true,
+                addonPlayerProgressIntervalSeconds = (prefs[addonPlayerProgressIntervalSecondsKey] ?: 30).coerceIn(5, 300),
                 useLibass = prefs[useLibassKey] ?: true,
                 libassRenderType = prefs[libassRenderTypeKey]?.let {
                     try { LibassRenderType.valueOf(it) } catch (e: Exception) { LibassRenderType.OVERLAY_OPEN_GL }
@@ -1237,6 +1245,18 @@ class PlayerSettingsDataStore @Inject constructor(
     suspend fun setAutoSwitchInternalPlayerOnError(enabled: Boolean) {
         store().edit { prefs ->
             prefs[autoSwitchInternalPlayerOnErrorKey] = enabled
+        }
+    }
+
+    suspend fun setAddonPlayerEventsEnabled(enabled: Boolean) {
+        store().edit { prefs ->
+            prefs[addonPlayerEventsEnabledKey] = enabled
+        }
+    }
+
+    suspend fun setAddonPlayerProgressIntervalSeconds(seconds: Int) {
+        store().edit { prefs ->
+            prefs[addonPlayerProgressIntervalSecondsKey] = seconds.coerceIn(5, 300)
         }
     }
 

@@ -775,6 +775,11 @@
     <string name="playback_engine_mvplayer">Libmpv (Béta)</string>
     <string name="playback_auto_switch_internal_player_on_error">Automatikus motorváltás indítási hiba esetén</string>
     <string name="playback_auto_switch_internal_player_on_error_sub">Ha a stream indítása sikertelen, váltson automatikusan az ExoPlayer és libmpv között.</string>
+    <string name="playback_addon_player_events">Bővítmény lejátszóesemények</string>
+    <string name="playback_addon_player_events_sub">Start, pause, stop és progress küldése a player erőforrást deklaráló telepített bővítményeknek (pl. Yamtrack scrobbler).</string>
+    <string name="playback_addon_player_progress_interval">Haladás frissítési időköz</string>
+    <string name="playback_addon_player_progress_interval_sub">Milyen gyakran küldjön progresset lejátszás közben. Szüneteltetéskor nincs frissítés. Alapértelmezett: 30 másodperc.</string>
+    <string name="playback_addon_player_progress_interval_value">%1$d másodperc</string>
     <string name="playback_release_decoder_on_background">Dekóder felszabadítása a háttérben</string>
     <string name="playback_release_decoder_on_background_sub">Felszabadítja a videódekódert, amikor a Nuvio a háttérbe kerül. Kapcsold be, ha az alkalmazásba visszatérve dekóderhiba miatt nem működik a lejátszás. Visszatéréskor a lejátszó újratöltődik, a képernyőkímélő után is.</string>
     <string name="playback_external_forward_subtitles">Feliratok továbbítása külső lejátszónak</string>
@@ -802,7 +807,7 @@
     <string name="playback_player_external_desc">Streamek megnyitása mindig külső alkalmazásban.</string>
     <string name="playback_player_ask_desc">Lejátszó kiválasztása minden alkalommal.</string>
     <string name="playback_player_auto">Automatikus (A tartalomhoz legjobb)</string>
-    <string name="playback_player_auto_desc">ExoPlayer filmekhez és sorozatokhoz · MPV animékhez</string>
+    <string name="playback_player_auto_desc">ExoPlayer filmekhez és sorozatokhoz · MPV animékhez és AVI-hoz</string>
     <string name="playback_engine_exoplayer_desc">Legjobb kompatibilitás a jelenlegi Nuvio funkciókkal.</string>
     <string name="playback_engine_mvplayer_desc">Libmpv-t használ a Nuvio OSD vezérlőivel. Kísérleti funkció.</string>
 
