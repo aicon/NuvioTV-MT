@@ -10,12 +10,19 @@ import kotlinx.coroutines.flow.asSharedFlow
  * does not need a PlayerRuntimeController reference.
  */
 object AddonPlayerRemoteCommands {
-    private val _commands = MutableSharedFlow<String>(extraBufferCapacity = 8)
+    // replay=1 so a command is not lost if the player collector starts a moment late.
+    private val _commands = MutableSharedFlow<String>(
+        replay = 1,
+        extraBufferCapacity = 8
+    )
     val commands: SharedFlow<String> = _commands.asSharedFlow()
 
     fun offer(command: String) {
         val normalized = command.trim().lowercase()
         if (normalized !in setOf("pause", "resume", "play", "start")) return
-        _commands.tryEmit(normalized)
+        if (!_commands.tryEmit(normalized)) {
+            _commands.resetReplayCache()
+            _commands.tryEmit(normalized)
+        }
     }
 }

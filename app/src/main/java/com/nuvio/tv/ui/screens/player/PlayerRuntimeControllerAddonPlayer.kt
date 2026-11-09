@@ -69,9 +69,10 @@ internal fun PlayerRuntimeController.startAddonPlayerControlPoller() {
     if (!addonPlayerEventsEnabled) return
     addonPlayerControlJob = scope.launch {
         while (isActive) {
-            delay(3_000L)
-            if (!addonPlayerEventsEnabled) continue
-            addonPlayerEventDispatcher.pollRemoteCommands(enabled = true)
+            if (addonPlayerEventsEnabled) {
+                addonPlayerEventDispatcher.pollRemoteCommands(enabled = true)
+            }
+            delay(2_000L)
         }
     }
 }
@@ -96,15 +97,24 @@ internal fun PlayerRuntimeController.stopAddonPlayerCommandCollector() {
 }
 
 internal suspend fun PlayerRuntimeController.applyAddonPlayerRemoteCommand(command: String) {
-    Log.d(PlayerRuntimeController.TAG, "addon remote command=$command")
+    Log.i(PlayerRuntimeController.TAG, "addon remote command=$command")
     withContext(Dispatchers.Main) {
         when (command) {
             "pause" -> {
-                runCatching { setPlaybackPaused(true) }
+                runCatching {
+                    _exoPlayer?.playWhenReady = false
+                    setPlaybackPaused(true)
+                    userPausedManually = true
+                }
                 emitAddonPlayerEvent("pause")
             }
             "resume", "play", "start" -> {
-                runCatching { setPlaybackPaused(false) }
+                runCatching {
+                    userPausedManually = false
+                    _exoPlayer?.playWhenReady = true
+                    setPlaybackPaused(false)
+                    startAddonPlayerProgressTicker()
+                }
                 emitAddonPlayerEvent("start")
             }
         }

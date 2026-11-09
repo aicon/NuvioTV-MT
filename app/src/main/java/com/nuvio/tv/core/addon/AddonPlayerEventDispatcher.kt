@@ -73,10 +73,15 @@ class AddonPlayerEventDispatcher @Inject constructor(
                     runCatching {
                         val request = Request.Builder().url(url).get().build()
                         requestClient.newCall(request).execute().use { response ->
+                            val body = response.body?.string().orEmpty()
                             Log.d(
                                 TAG,
                                 "player event action=$normalizedAction addon=${addon.id} code=${response.code}"
                             )
+                            parseRemoteCommand(body)?.let { command ->
+                                Log.i(TAG, "remote command=$command via player event addon=${addon.id}")
+                                AddonPlayerRemoteCommands.offer(command)
+                            }
                         }
                     }.onFailure { err ->
                         Log.d(TAG, "player event failed addon=${addon.id} action=$normalizedAction: ${err.message}")
@@ -110,7 +115,7 @@ class AddonPlayerEventDispatcher @Inject constructor(
                             if (!response.isSuccessful) return@use
                             val body = response.body?.string().orEmpty()
                             parseRemoteCommand(body)?.let { command ->
-                                Log.d(TAG, "remote command=$command addon=${addon.id}")
+                                Log.i(TAG, "remote command=$command via playback-control addon=${addon.id}")
                                 AddonPlayerRemoteCommands.offer(command)
                             }
                         }
