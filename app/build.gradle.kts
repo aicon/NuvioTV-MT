@@ -301,12 +301,23 @@ android {
         }
     }
 
+    val onlyAbis = providers.gradleProperty("onlyAbis").orNull
+        ?.split(",")
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        .orEmpty()
+
     splits {
         abi {
             isEnable = !buildingAppBundle
             reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            isUniversalApk = true
+            if (onlyAbis.isEmpty()) {
+                include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+                isUniversalApk = true
+            } else {
+                include(*onlyAbis.toTypedArray())
+                isUniversalApk = false
+            }
         }
     }
 
