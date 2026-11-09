@@ -61,4 +61,4 @@ git merge upstream/dev
 
 - Live scrobble Docker addon: [MediaTrail-Scrobbler](https://github.com/aicon/MediaTrail-Scrobbler)
 - Hourly history poll: [Nuvio-Yamtrack-Bridge](https://github.com/aicon/Nuvio-Yamtrack-Bridge)
-- Mobile counterpart (planned): `aicon/NuvioMobile-Yamtrack` / `com.aicon.nuviomobile`
+- Mobile counterpart (planned): `aicon/NuvioMobile-Scrobbler` / `com.aicon.nuviomobile`
