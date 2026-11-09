@@ -1160,7 +1160,7 @@ internal fun PlayerRuntimeController.emitScrobbleStop(progressPercent: Float? = 
     hasRequestedScrobbleStartForCurrentItem = false
     hasSentScrobbleStartForCurrentItem = false
     logScrobbleDiagnostic("stop_state_reset", "progress=$percent")
-    stopAddonPlayerProgressTicker()
+    stopAddonPlayerControlSession()
     emitAddonPlayerEvent("stop")
 }
 

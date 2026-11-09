@@ -408,10 +408,13 @@ internal fun PlayerRuntimeController.observeSubtitleSettings() {
             autoSwitchInternalPlayerOnErrorEnabled = settings.autoSwitchInternalPlayerOnError
             addonPlayerEventsEnabled = settings.addonPlayerEventsEnabled
             addonPlayerProgressIntervalSeconds = settings.addonPlayerProgressIntervalSeconds
-            if (addonPlayerEventsEnabled && isPlaybackCurrentlyPlaying() && !_uiState.value.isPaused) {
+            if (addonPlayerEventsEnabled && isPlaybackCurrentlyPlaying()) {
                 startAddonPlayerProgressTicker()
-            } else if (!addonPlayerEventsEnabled) {
-                stopAddonPlayerProgressTicker()
+            } else if (addonPlayerEventsEnabled) {
+                // Keep remote pause/resume polling while locally paused.
+                ensureAddonPlayerControlSession()
+            } else {
+                stopAddonPlayerControlSession()
             }
             currentInternalPlayerEngine = resolvedInternalPlayerEngine
             streamAutoPlayModeSetting = settings.streamAutoPlayMode
