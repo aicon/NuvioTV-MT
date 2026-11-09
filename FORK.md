@@ -1,4 +1,4 @@
-# NuvioTV-Yamtrack (product fork)
+# NuvioTV-Scrobbler (product fork)
 
 Personal product fork of [NuvioMedia/NuvioTV](https://github.com/NuvioMedia/NuvioTV).  
 **Not an official Nuvio build.**
@@ -22,7 +22,7 @@ Kotlin/Java `namespace` remains `com.nuvio.tv` (R/BuildConfig package). Only the
 `BuildConfig.GITHUB_OWNER` / `GITHUB_REPO` point at:
 
 - Owner: `aicon`
-- Repo: `NuvioTV-Yamtrack`
+- Repo: `NuvioTV-Scrobbler`
 
 Release assets must be built with `applicationId=com.aicon.nuviotv` so the PackageInstaller self-update path matches.
 
@@ -46,7 +46,7 @@ Generate a dedicated key for this product fork and keep backups offline.
 ## Remotes
 
 ```
-origin    https://github.com/aicon/NuvioTV-Yamtrack.git
+origin    https://github.com/aicon/NuvioTV-Scrobbler.git
 upstream  https://github.com/NuvioMedia/NuvioTV.git
 ```
 

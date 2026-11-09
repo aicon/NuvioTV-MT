@@ -66,7 +66,7 @@ import com.nuvio.tv.core.cloud.TorboxCloudLibraryPosterUrl
 import com.nuvio.tv.core.cloud.cloudLibraryDisplayArtworkUrl
 import com.nuvio.tv.ui.util.rememberRawSvgPainter
 
-private const val NuvioRepositoryUrl = "https://github.com/aicon/NuvioTV-Yamtrack"
+private const val NuvioRepositoryUrl = "https://github.com/aicon/NuvioTV-Scrobbler"
 private const val TmdbUrl = "https://www.themoviedb.org"
 private const val TraktUrl = "https://trakt.tv"
 private const val SimklUrl = "https://simkl.com"
