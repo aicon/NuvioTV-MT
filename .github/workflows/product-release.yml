@@ -183,6 +183,8 @@ jobs:
             echo "- **Player engine.** The default engine is Auto. Movies and ordinary TV use ExoPlayer. Anime (Kitsu, MAL, AniList, or an anime genre) uses libmpv. AVI and XviD use libmpv even when the saved engine is ExoPlayer, unless an engine was chosen for that playback. HDR and Dolby Vision stay on ExoPlayer."
             echo "- **Own update channel.** The built-in updater looks at this repository, not upstream NuvioTV."
             echo "- **Support.** The in-app support button and QR code open [Ko-fi](https://ko-fi.com/aiconwg)."
+            echo "- **MediaTrail name.** The playback-events setting now says MediaTrail instead of Yamtrack."
+            echo "- **Community lists.** The supporters, sponsors, and contributors lists stay hidden until this fork has its own list. The Ko-fi button and QR code stay."
             echo
             echo "The fork does not pause or resume the television from the MediaTrail page. Playback events go out to the addon. They do not come back as remote controls."
             echo
