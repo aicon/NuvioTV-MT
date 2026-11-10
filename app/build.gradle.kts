@@ -178,7 +178,7 @@ android {
 
         // In-app updater (GitHub Releases) — this product fork's channel
         buildConfigField("String", "GITHUB_OWNER", "\"aicon\"")
-        buildConfigField("String", "GITHUB_REPO", "\"NuvioTV-Scrobbler\"")
+        buildConfigField("String", "GITHUB_REPO", "\"NuvioTV-MT\"")
     }
 
     flavorDimensions += "distribution"

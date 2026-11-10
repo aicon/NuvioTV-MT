@@ -1,4 +1,4 @@
-# NuvioTV-Scrobbler (product fork)
+# NuvioTV-MT (product fork)
 
 Personal product fork of [NuvioMedia/NuvioTV](https://github.com/NuvioMedia/NuvioTV).  
 **Not an official Nuvio build.**
@@ -22,7 +22,7 @@ Kotlin/Java `namespace` remains `com.nuvio.tv` (R/BuildConfig package). Only the
 `BuildConfig.GITHUB_OWNER` / `GITHUB_REPO` point at:
 
 - Owner: `aicon`
-- Repo: `NuvioTV-Scrobbler`
+- Repo: `NuvioTV-MT`
 
 Release assets must be built with `applicationId=com.aicon.nuviotv` so the PackageInstaller self-update path matches.
 
@@ -46,7 +46,7 @@ Generate a dedicated key for this product fork and keep backups offline.
 ## Remotes
 
 ```
-origin    https://github.com/aicon/NuvioTV-Scrobbler.git
+origin    https://github.com/aicon/NuvioTV-MT.git
 upstream  https://github.com/NuvioMedia/NuvioTV.git
 ```
 
@@ -61,4 +61,4 @@ git merge upstream/dev
 
 - Live scrobble Docker addon: [MediaTrail-Scrobbler](https://github.com/aicon/MediaTrail-Scrobbler)
 - Hourly history poll: [Nuvio-Yamtrack-Bridge](https://github.com/aicon/Nuvio-Yamtrack-Bridge)
-- Mobile counterpart (planned): `aicon/NuvioMobile-Scrobbler` / `com.aicon.nuviomobile`
+- Mobile counterpart (planned): `aicon/NuvioMobile-MT` / `com.aicon.nuviomobile`
