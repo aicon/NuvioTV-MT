@@ -182,6 +182,7 @@ jobs:
             echo "- **MediaTrail playback.** While something is playing, the app sends \`start\`, \`pause\`, \`progress\`, and \`stop\` to installed addons that declare the Stremio \`player\` resource. With [MediaTrail-Scrobbler](https://github.com/aicon/MediaTrail-Scrobbler) that updates the MediaTrail Now Watching banner and, after the watch threshold, the watch history. Progress is sent about every 30 seconds and not while paused. The switch is on by default under playback settings."
             echo "- **Player engine.** The default engine is Auto. Movies and ordinary TV use ExoPlayer. Anime (Kitsu, MAL, AniList, or an anime genre) uses libmpv. AVI and XviD use libmpv even when the saved engine is ExoPlayer, unless an engine was chosen for that playback. HDR and Dolby Vision stay on ExoPlayer."
             echo "- **Own update channel.** The built-in updater looks at this repository, not upstream NuvioTV."
+            echo "- **Support.** The in-app support button and QR code open [Ko-fi](https://ko-fi.com/aiconwg)."
             echo
             echo "The fork does not pause or resume the television from the MediaTrail page. Playback events go out to the addon. They do not come back as remote controls."
             echo
