@@ -3,6 +3,9 @@ name: Product release
 on:
   push:
     branches: [main, dev]
+    paths-ignore:
+      - "**/*.md"
+      - ".gitignore"
   workflow_dispatch:
 
 permissions:
