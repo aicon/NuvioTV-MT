@@ -1,0 +1,88 @@
+# NuvioTV-MT
+
+[🇺🇸 English description (README in English)](README.md)
+
+---
+
+**Önálló Android TV kliens, a [NuvioTV](https://github.com/NuvioMedia/NuvioTV) kiegészített forkja beépített MediaTrail scrobbler-támogatással, intelligens lejátszómotor-választással, független telepíthetőséggel és saját alkalmazáson belüli frissítővel.**
+
+[![Verzió](https://img.shields.io/badge/verzió-legfrissebb-blue.svg)](https://github.com/aicon/NuvioTV-MT/releases)
+[![Licenc: GPL v3](https://img.shields.io/badge/Licenc-GPL_v3-green.svg)](LICENSE)
+[![MediaTrail kiegészítő](https://img.shields.io/badge/kiegészítő-MediaTrail-orange.svg)](https://github.com/aicon/MediaTrail)
+[![Upstream](https://img.shields.io/badge/upstream-NuvioTV-purple.svg)](https://github.com/NuvioMedia/NuvioTV)
+
+---
+
+## Áttekintés
+
+A NuvioTV-MT a NuvioTV független, közösségi kiadása kifejezetten Android TV és Google TV eszközökre. Megtartja az eredeti Nuvio összes forráskezelési, katalógus- és lejátszási funkcióját, miközben natív kapcsolatot biztosít a **[MediaTrail](https://github.com/aicon/MediaTrail)** rendszerrel, intelligens motorválasztást nyújt a különböző formátumokhoz, és zökkenőmentesen megfér a hivatalos Nuvio alkalmazás mellett.
+
+---
+
+## ✨ Főbb funkciók és eltérések
+
+### 1. Párhuzamos telepíthetőség
+- **Csomagnév:** `com.aicon.nuviotv` (debug változat: `com.aicon.nuviotv.debug`).
+- Teljesen függetlenül telepíthető a hivatalos NuvioTV (`com.nuvio.tv`) mellé, nem írja felül azt.
+- **Indítóikon neve:** Angol nyelvű rendszeren **Nuvio YT**, magyar nyelvre állított tévén **Nuvio**.
+
+### 2. MediaTrail lejátszás-szinkronizáció
+- Lejátszás közben valós időben továbbítja a lejátszó eseményeit (`start`, `pause`, `progress`, `stop`) a `player` erőforrást hirdető addonoknak.
+- Teljes összhangban működik a **[MediaTrail-Scrobblerrel](https://github.com/aicon/MediaTrail-Scrobbler)**: kezeli a kezdőlapi **„Most nézem”** sávot, a megtekintési küszöb (alapból 80%) elérésekor pedig bejegyzi az előzményt.
+- Aktív lejátszás alatt 30 másodpercenként küld állapotjelzést (szüneteltetés alatt nem terhel).
+- A videó lejátszása és dekódolása helyben történik a tévén; a MediaTrail csak az állapotinformációkat kapja meg.
+- A funkció a **Lejátszási beállításokban** tetszés szerint ki- és bekapcsolható (alapértelmezetten aktív).
+
+### 3. Intelligens lejátszómotor-választás (Auto)
+Az alapértelmezett „Auto” motor intelligensen választja ki a legmegfelelőbb dekódolót:
+
+| Tartalom / Formátum | Választott lejátszómotor |
+| :--- | :---: |
+| **Normál filmek és sorozatok** | **ExoPlayer** |
+| **Anime** *(MAL, Kitsu, AniList azonosító, anime műfaj alapján)* | **libmpv** |
+| **Hagyományos kodekek** *(AVI formátum, XviD kódolás)* | **libmpv** |
+| **HDR és Dolby Vision** *(Elsőbbséget élvez még AVI név esetén is)* | **ExoPlayer** |
+
+*(A címeknél manuálisan megadott egyedi motorbeállítás mindig felülbírálja az automatikus választást).*
+
+### 4. Saját alkalmazáson belüli frissítő
+Beépített frissítőmodul, amely közvetlenül az `aicon/NuvioTV-MT` GitHub kiadásait figyeli:
+- **Stabil csatorna:** A `main` ág kiadásait követi (előzetes jelölés nélküli stabil verziók).
+- **Béta csatorna:** A `dev` ág kiadásait követi (előzetes és tesztverziók is megjelennek).
+- Automatikusan a tévé processzortípusához (ARM64, ARMv7 stb.) illeszkedő APK csomagot tölti le.
+- Az egyszerű frissítéshez azonos csomagnév és azonos aláírókulcs szükséges.
+
+---
+
+## 📥 Letöltés és Telepítés
+
+1. Látogass el a **[Releases](https://github.com/aicon/NuvioTV-MT/releases)** menüpontra.
+2. Töltsd le a készülékednek megfelelő APK fájlt (Android TV esetén tipikusan `arm64-v8a` vagy `armeabi-v7a`).
+3. Telepítsd fel az APK-t az Android TV-re a megszokott módszerrel (ADB, Downloader alkalmazás, Send Files to TV, vagy pendrive segítségével).
+
+---
+
+## 🛠️ Fordítás forráskódból
+
+A NuvioTV-MT Kotlin, Jetpack Compose, TV Material 3 és Media3 alapokra épül. A fordításhoz Android Studio, JDK és Android SDK szükséges:
+
+```bash
+git clone https://github.com/aicon/NuvioTV-MT.git
+cd NuvioTV-MT
+./gradlew :app:assembleFullDebug
+```
+
+---
+
+## 🌿 Ágkezelés és Upstream frissítések
+
+- **`main`:** A hivatalos NuvioTV stabil kiadási címkéit követi.
+- **`dev`:** A hivatalos NuvioTV béta kiadási címkéit követi.
+- A hivatalos verziók beolvasztással (merge) kerülnek át, így a fork saját módosításai és funkciói folyamatosan megmaradnak.
+
+---
+
+## 📜 Licenc és Szerzői Jogok
+
+A projekt a **[GNU General Public License v3.0 (GPL-3.0)](LICENSE)** feltételei szerint használható és módosítható.  
+Az eredeti alkalmazás szerzői joga a [NuvioMedia/NuvioTV](https://github.com/NuvioMedia/NuvioTV) csapatát illeti.
