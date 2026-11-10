@@ -8,6 +8,7 @@ import com.nuvio.tv.data.repository.MembershipOverviewRepository
 import com.nuvio.tv.data.repository.DevelopmentSponsor
 import com.nuvio.tv.data.repository.SponsorsRepository
 import com.nuvio.tv.data.repository.SupporterMember
+import com.nuvio.tv.core.build.AppFeaturePolicy
 import com.nuvio.tv.data.repository.SupportersRepository
 import com.nuvio.tv.domain.model.MembershipOverviewState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -62,8 +63,10 @@ class SupportersContributorsViewModel @Inject constructor(
                 _uiState.update { it.copy(membership = membership) }
             }
         }
-        loadContributorsIfNeeded()
-        loadSupportersIfNeeded()
+        if (AppFeaturePolicy.communityListsEnabled) {
+            loadContributorsIfNeeded()
+            loadSupportersIfNeeded()
+        }
     }
 
     fun refreshMembership() {
@@ -71,6 +74,7 @@ class SupportersContributorsViewModel @Inject constructor(
     }
 
     fun onSelectTab(tab: SupportersContributorsTab) {
+        if (!AppFeaturePolicy.communityListsEnabled) return
         _uiState.update { it.copy(selectedTab = tab) }
         when (tab) {
             SupportersContributorsTab.Supporters -> loadSupportersIfNeeded()

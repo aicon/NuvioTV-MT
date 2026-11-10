@@ -7,6 +7,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 
+import com.nuvio.tv.core.build.AppFeaturePolicy
 import com.nuvio.tv.ui.theme.NuvioTheme
 
 import android.content.Intent
@@ -135,7 +136,11 @@ fun SupportersContributorsScreen(
     }
 
     LaunchedEffect(Unit) {
-        tabFocusRequesters.getValue(SupportersContributorsTab.Contributors).requestFocusAfterFrames()
+        if (AppFeaturePolicy.communityListsEnabled) {
+            tabFocusRequesters.getValue(SupportersContributorsTab.Contributors).requestFocusAfterFrames()
+        } else {
+            membershipActionFocusRequester.requestFocusAfterFrames()
+        }
     }
 
     LaunchedEffect(uiState.supporters) {
@@ -183,7 +188,11 @@ fun SupportersContributorsScreen(
             SupporterMembershipPanel(
                 state = uiState.membership,
                 supportUrl = SUPPORT_URL,
-                modifier = Modifier.weight(0.35f),
+                modifier = if (AppFeaturePolicy.communityListsEnabled) {
+                    Modifier.weight(0.35f)
+                } else {
+                    Modifier.fillMaxWidth(0.42f)
+                },
                 actionFocusRequester = membershipActionFocusRequester,
                 backFocusRequester = membershipBackFocusRequester,
                 showQr = showMembershipQr,
@@ -192,7 +201,7 @@ fun SupportersContributorsScreen(
                 onRefresh = viewModel::refreshMembership
             )
 
-            SupportersContentPanel(
+            if (AppFeaturePolicy.communityListsEnabled) SupportersContentPanel(
                 uiState = uiState,
                 leftFocusRequester = if (showMembershipQr) {
                     membershipBackFocusRequester

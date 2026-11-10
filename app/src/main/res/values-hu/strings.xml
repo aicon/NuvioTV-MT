@@ -776,7 +776,7 @@
     <string name="playback_auto_switch_internal_player_on_error">Automatikus motorváltás indítási hiba esetén</string>
     <string name="playback_auto_switch_internal_player_on_error_sub">Ha a stream indítása sikertelen, váltson automatikusan az ExoPlayer és libmpv között.</string>
     <string name="playback_addon_player_events">Bővítmény lejátszóesemények</string>
-    <string name="playback_addon_player_events_sub">Start, pause, stop és progress küldése a player erőforrást deklaráló telepített bővítményeknek (pl. Yamtrack scrobbler).</string>
+    <string name="playback_addon_player_events_sub">Indulást, szünetet, leállást és folyamatot küld azoknak a telepített bővítményeknek, amelyek ezt fogadják, például a MediaTrail scrobblernek.</string>
     <string name="playback_addon_player_progress_interval">Haladás frissítési időköz</string>
     <string name="playback_addon_player_progress_interval_sub">Milyen gyakran küldjön progresset lejátszás közben. Szüneteltetéskor nincs frissítés. Alapértelmezett: 30 másodperc.</string>
     <string name="playback_addon_player_progress_interval_value">%1$d másodperc</string>
