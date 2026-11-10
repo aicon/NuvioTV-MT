@@ -1,0 +1,217 @@
+name: Product release
+
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: product-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Signed release for ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      LOCAL_PROPERTIES_BASE64: ${{ secrets.LOCAL_PROPERTIES_BASE64 }}
+      LOCAL_DEV_PROPERTIES_BASE64: ${{ secrets.LOCAL_DEV_PROPERTIES_BASE64 }}
+      RELEASE_KEYSTORE_BASE64: ${{ secrets.NUVIO_RELEASE_KEYSTORE_BASE64 }}
+      RELEASE_KEY_ALIAS: ${{ secrets.NUVIO_RELEASE_KEY_ALIAS }}
+      RELEASE_KEY_PASSWORD: ${{ secrets.NUVIO_RELEASE_KEY_PASSWORD }}
+      RELEASE_STORE_PASSWORD: ${{ secrets.NUVIO_RELEASE_STORE_PASSWORD }}
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        run: |
+          set -eu
+          version="$(sed -nE 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"([^"]+)".*$/\1/p' app/build.gradle.kts | head -n 1)"
+          code="$(sed -nE 's/^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*([0-9]+).*$/\1/p' app/build.gradle.kts | head -n 1)"
+          if [[ -z "${version}" || -z "${code}" ]]; then
+            echo "Could not read versionName and versionCode." >&2
+            exit 1
+          fi
+          prerelease=false
+          if [[ "${GITHUB_REF_NAME}" == "dev" || "${version}" == *-* ]]; then
+            prerelease=true
+          fi
+          if [[ "${GITHUB_REF_NAME}" == "main" && "${version}" != *-* ]]; then
+            prerelease=false
+          fi
+          core="${version%%-*}"
+          suffix=""
+          title="${version}"
+          if [[ "${version}" == *-* ]]; then
+            suffix="${version#*-}"
+          fi
+          if [[ "${suffix}" == beta.* ]]; then
+            title="Beta ${core} (${suffix#beta.})"
+          elif [[ "${suffix}" == "beta" ]]; then
+            title="Beta ${core}"
+          fi
+          exists=false
+          if gh release view "${version}" >/dev/null 2>&1; then
+            exists=true
+            echo "Release ${version} already exists. Skipping the build."
+          fi
+          {
+            echo "version=${version}"
+            echo "code=${code}"
+            echo "tag=${version}"
+            echo "title=${title}"
+            echo "prerelease=${prerelease}"
+            echo "exists=${exists}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Java
+        if: steps.version.outputs.exists != 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        if: steps.version.outputs.exists != 'true'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configure release signing
+        if: steps.version.outputs.exists != 'true'
+        run: |
+          set -eu
+          if [[ -z "${RELEASE_KEYSTORE_BASE64}" || -z "${LOCAL_PROPERTIES_BASE64}" ]]; then
+            echo "Missing NUVIO_RELEASE_KEYSTORE_BASE64 or LOCAL_PROPERTIES_BASE64." >&2
+            exit 1
+          fi
+          keystore_path="${RUNNER_TEMP}/release.keystore"
+          python3 - <<'PY'
+          import base64, binascii, os, pathlib, sys
+          raw = os.environ["RELEASE_KEYSTORE_BASE64"].strip().lstrip("\ufeff")
+          b64 = "".join(raw.split())
+          try:
+              data = base64.b64decode(b64, validate=False)
+          except binascii.Error as exc:
+              print(f"Keystore Base64 decode failed: {exc}", file=sys.stderr)
+              raise SystemExit(1) from exc
+          path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "release.keystore"
+          path.write_bytes(data)
+          if path.stat().st_size == 0:
+              print("Keystore file is empty after decode.", file=sys.stderr)
+              raise SystemExit(1)
+          props = base64.b64decode("".join(os.environ["LOCAL_PROPERTIES_BASE64"].strip().split()))
+          pathlib.Path("local.properties").write_bytes(props)
+          dev = os.environ.get("LOCAL_DEV_PROPERTIES_BASE64", "").strip()
+          if dev:
+              pathlib.Path("local.dev.properties").write_bytes(base64.b64decode("".join(dev.split())))
+          PY
+          python3 - <<PY
+          import os, pathlib, re
+          path = pathlib.Path("local.properties")
+          text = path.read_text(encoding="utf-8", errors="replace")
+          lines = [
+              line for line in text.splitlines()
+              if not re.match(r"^\s*(sdk\.dir|NUVIO_RELEASE_STORE_FILE|NUVIO_RELEASE_KEY_ALIAS|NUVIO_RELEASE_KEY_PASSWORD|NUVIO_RELEASE_STORE_PASSWORD)\s*=", line)
+          ]
+          values = {
+              "NUVIO_RELEASE_STORE_FILE": os.environ["RUNNER_TEMP"] + "/release.keystore",
+              "NUVIO_RELEASE_KEY_ALIAS": os.environ["RELEASE_KEY_ALIAS"],
+              "NUVIO_RELEASE_KEY_PASSWORD": os.environ["RELEASE_KEY_PASSWORD"],
+              "NUVIO_RELEASE_STORE_PASSWORD": os.environ["RELEASE_STORE_PASSWORD"],
+          }
+          for key, value in values.items():
+              if not value:
+                  print(f"Missing {key}.", file=__import__("sys").stderr)
+                  raise SystemExit(1)
+              lines.append(f"{key}={value}")
+          path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+          keytool -list -keystore "${keystore_path}" -storepass "${RELEASE_STORE_PASSWORD}" >/dev/null
+
+      - name: Build every ABI
+        if: steps.version.outputs.exists != 'true'
+        run: ./gradlew :app:assembleFullRelease --stacktrace
+
+      - name: Write release notes
+        if: steps.version.outputs.exists != 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_CODE: ${{ steps.version.outputs.code }}
+          RELEASE_TITLE: ${{ steps.version.outputs.title }}
+          RELEASE_PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          set -eu
+          channel="Stable"
+          if [[ "${RELEASE_PRERELEASE}" == "true" ]]; then
+            channel="Beta"
+          fi
+          {
+            if [[ "${RELEASE_PRERELEASE}" == "true" ]]; then
+              printf '%s\n' \
+                '> [!IMPORTANT]' \
+                '> **Beta builds are for testing and may contain bugs or regressions.** For the regular install, use the Stable channel.' \
+                ''
+            fi
+            echo "# ${RELEASE_TITLE}"
+            echo
+            echo "Signed NuvioTV-MT ${channel} build \`${RELEASE_VERSION}\` (versionCode \`${RELEASE_CODE}\`)."
+            echo "This is a personal product fork of NuvioTV. It is not an official Nuvio build."
+            echo
+            echo "## Install"
+            echo
+            echo "- Package: \`com.aicon.nuviotv\`"
+            echo "- The package id is different from official NuvioTV (\`com.nuvio.tv\`), so this APK installs beside it and does not replace it."
+            echo "- Pick the APK that matches the device CPU. A universal APK is included for the other cases."
+            echo "- \`armeabi-v7a\` for 32-bit Android TV"
+            echo "- \`arm64-v8a\` for 64-bit phones and newer TVs"
+            echo "- \`x86\` and \`x86_64\` for emulators"
+            echo "- In-app updates read public releases from \`aicon/NuvioTV-MT\`. Stable builds come from \`main\`. Beta builds come from \`dev\`."
+            echo
+            echo "## What this fork adds"
+            echo
+            echo "- **MediaTrail playback.** While something is playing, the app sends \`start\`, \`pause\`, \`progress\`, and \`stop\` to installed addons that declare the Stremio \`player\` resource. With [MediaTrail-Scrobbler](https://github.com/aicon/MediaTrail-Scrobbler) that updates the MediaTrail Now Watching banner and, after the watch threshold, the watch history. Progress is sent about every 30 seconds and not while paused. The switch is on by default under playback settings."
+            echo "- **Player engine.** The default engine is Auto. Movies and ordinary TV use ExoPlayer. Anime (Kitsu, MAL, AniList, or an anime genre) uses libmpv. AVI and XviD use libmpv even when the saved engine is ExoPlayer, unless an engine was chosen for that playback. HDR and Dolby Vision stay on ExoPlayer."
+            echo "- **Own update channel.** The built-in updater looks at this repository, not upstream NuvioTV."
+            echo
+            echo "The fork does not pause or resume the television from the MediaTrail page. Playback events go out to the addon. They do not come back as remote controls."
+            echo
+            echo "## Commits in this build"
+            echo
+            git log --no-merges --format='- %s' -n 25 HEAD
+            echo
+          } > release-notes.md
+
+      - name: Publish the release
+        if: steps.version.outputs.exists != 'true'
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_TITLE: ${{ steps.version.outputs.title }}
+          RELEASE_PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          set -eu
+          mapfile -t release_apks < <(find app/build/outputs/apk/full/release -maxdepth 1 -type f -name '*.apk' -print | sort)
+          if (( ${#release_apks[@]} == 0 )); then
+            echo "No release APKs were produced." >&2
+            exit 1
+          fi
+          printf 'APKs:\n'
+          printf '  %s\n' "${release_apks[@]}"
+          release_args=(
+            "${RELEASE_TAG}"
+            --target "${GITHUB_SHA}"
+            --title "${RELEASE_TITLE}"
+            --notes-file release-notes.md
+          )
+          if [[ "${RELEASE_PRERELEASE}" == "true" ]]; then
+            release_args+=(--prerelease)
+          else
+            release_args+=(--latest)
+          fi
+          gh release create "${release_args[@]}" "${release_apks[@]}"
