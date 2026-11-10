@@ -191,6 +191,14 @@ jobs:
             echo
           } > release-notes.md
 
+      - name: Upload the APKs
+        if: steps.version.outputs.exists != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-release-${{ steps.version.outputs.tag }}
+          path: app/build/outputs/apk/full/release/*.apk
+          if-no-files-found: error
+
       - name: Publish the release
         if: steps.version.outputs.exists != 'true'
         env:
@@ -206,9 +214,19 @@ jobs:
           fi
           printf 'APKs:\n'
           printf '  %s\n' "${release_apks[@]}"
+          if git rev-parse -q --verify "refs/tags/${RELEASE_TAG}" >/dev/null; then
+            existing="$(git rev-parse "refs/tags/${RELEASE_TAG}^{}")"
+            if [[ "${existing}" != "${GITHUB_SHA}" ]]; then
+              echo "Tag ${RELEASE_TAG} already points at ${existing}." >&2
+              exit 1
+            fi
+          else
+            git tag "${RELEASE_TAG}" "${GITHUB_SHA}"
+          fi
+          git push origin "refs/tags/${RELEASE_TAG}"
           release_args=(
             "${RELEASE_TAG}"
-            --target "${GITHUB_SHA}"
+            --verify-tag
             --title "${RELEASE_TITLE}"
             --notes-file release-notes.md
           )
