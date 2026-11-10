@@ -295,7 +295,8 @@ enum class NightMode(val settingValue: String) {
  */
 data class PlayerSettings(
     val playerPreference: PlayerPreference = PlayerPreference.INTERNAL,
-    val internalPlayerEngine: InternalPlayerEngine = InternalPlayerEngine.EXOPLAYER,
+    // Product fork default: AUTO so AVI/anime engine picks apply without a settings visit.
+    val internalPlayerEngine: InternalPlayerEngine = InternalPlayerEngine.AUTO,
     val autoSwitchInternalPlayerOnError: Boolean = false,
     /** Forward Stremio player events to installed addons that declare the player resource. */
     val addonPlayerEventsEnabled: Boolean = true,
@@ -1001,8 +1002,8 @@ class PlayerSettingsDataStore @Inject constructor(
                     runCatching { PlayerPreference.valueOf(it) }.getOrDefault(PlayerPreference.INTERNAL)
                 } ?: PlayerPreference.INTERNAL,
                 internalPlayerEngine = prefs[internalPlayerEngineKey]?.let {
-                    runCatching { InternalPlayerEngine.valueOf(it) }.getOrDefault(InternalPlayerEngine.EXOPLAYER)
-                } ?: InternalPlayerEngine.EXOPLAYER,
+                    runCatching { InternalPlayerEngine.valueOf(it) }.getOrDefault(InternalPlayerEngine.AUTO)
+                } ?: InternalPlayerEngine.AUTO,
                 autoSwitchInternalPlayerOnError = prefs[autoSwitchInternalPlayerOnErrorKey] ?: false,
                 addonPlayerEventsEnabled = prefs[addonPlayerEventsEnabledKey] ?: true,
                 addonPlayerProgressIntervalSeconds = (prefs[addonPlayerProgressIntervalSecondsKey] ?: 30).coerceIn(5, 300),

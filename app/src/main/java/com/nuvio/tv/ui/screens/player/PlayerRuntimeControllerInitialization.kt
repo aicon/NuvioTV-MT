@@ -245,6 +245,18 @@ internal fun PlayerRuntimeController.initializePlayer(
             var effectiveInternalPlayerEngine = overrideInternalPlayerEngine ?: playerSettings.internalPlayerEngine
             if (effectiveInternalPlayerEngine == InternalPlayerEngine.AUTO) {
                 effectiveInternalPlayerEngine = resolveAutoInternalPlayerEngine()
+            } else if (
+                // Product fork: default/manual Exo still yields to libmpv for AVI (AUTO path already does).
+                overrideInternalPlayerEngine == null &&
+                effectiveInternalPlayerEngine == InternalPlayerEngine.EXOPLAYER &&
+                shouldPreferMpvForAviContainer()
+            ) {
+                effectiveInternalPlayerEngine = InternalPlayerEngine.MVP_PLAYER
+                Log.i(
+                    PlayerRuntimeController.TAG,
+                    "AVI container detected — preferring libmpv over ExoPlayer " +
+                        "(filename=${currentFilename} url=${currentStreamUrl?.safeHost()})"
+                )
             }
             runtimeInternalPlayerEngineOverride = overrideInternalPlayerEngine
             if (overrideInternalPlayerEngine == null && playerSettings.internalPlayerEngine == InternalPlayerEngine.AUTO) {
@@ -1961,48 +1973,58 @@ internal fun PlayerRuntimeController.initializePlayer(
 }
 
 internal suspend fun PlayerRuntimeController.resolveAutoInternalPlayerEngine(): InternalPlayerEngine {
-    val streamMetadataText = buildString {
-        currentFilename?.let { appendLine(it) }
-        streamName?.let { appendLine(it) }
-        currentStreamDescription?.let { appendLine(it) }
-        append(title)
+    if (shouldPreferMpvForAviContainer()) {
+        return InternalPlayerEngine.MVP_PLAYER
     }
-    val isHdrOrDv = Regex("""(?i)\b(hdr|hdr10\+?|dv|dolby\s*vision)\b""").containsMatchIn(streamMetadataText)
-
-    return if (isHdrOrDv) {
-        // Prefer Exo for HDR/DV even when the container looks like AVI.
-        InternalPlayerEngine.EXOPLAYER
-    } else {
-        // AVI often stutters on ExoPlayer/TV; prefer libmpv when metadata or URL says AVI.
-        if (looksLikeAviContainer(
-                filename = currentFilename,
-                streamName = streamName,
-                streamDescription = currentStreamDescription,
-                streamUrl = currentStreamUrl,
-                metadataText = streamMetadataText
-            )
-        ) {
-            return InternalPlayerEngine.MVP_PLAYER
-        }
-
-        val hasAnimeId = currentVideoId?.startsWith("kitsu:") == true ||
-                currentVideoId?.startsWith("mal:") == true ||
-                currentVideoId?.startsWith("anilist:") == true
-
-        if (hasAnimeId) return InternalPlayerEngine.MVP_PLAYER
-
-        metaFetchJob?.let { job ->
-            withTimeoutOrNull(3000L) { job.join() }
-        }
-
-        val hasAnimeGenre = metaGenres.any { it.equals("anime", ignoreCase = true) }
-        val isAnimationFromJapan = (metaGenres.any { it.equals("animation", ignoreCase = true) } &&
-                metaCountry?.contains("Japan", ignoreCase = true) == true)
-
-        val isAnime = hasAnimeGenre || isAnimationFromJapan
-
-        if (isAnime) InternalPlayerEngine.MVP_PLAYER else InternalPlayerEngine.EXOPLAYER
+    if (streamMetadataLooksHdrOrDv()) {
+        // Prefer Exo for HDR/DV.
+        return InternalPlayerEngine.EXOPLAYER
     }
+
+    val hasAnimeId = currentVideoId?.startsWith("kitsu:") == true ||
+            currentVideoId?.startsWith("mal:") == true ||
+            currentVideoId?.startsWith("anilist:") == true
+
+    if (hasAnimeId) return InternalPlayerEngine.MVP_PLAYER
+
+    metaFetchJob?.let { job ->
+        withTimeoutOrNull(3000L) { job.join() }
+    }
+
+    val hasAnimeGenre = metaGenres.any { it.equals("anime", ignoreCase = true) }
+    val isAnimationFromJapan = (metaGenres.any { it.equals("animation", ignoreCase = true) } &&
+            metaCountry?.contains("Japan", ignoreCase = true) == true)
+
+    val isAnime = hasAnimeGenre || isAnimationFromJapan
+
+    return if (isAnime) InternalPlayerEngine.MVP_PLAYER else InternalPlayerEngine.EXOPLAYER
+}
+
+internal fun PlayerRuntimeController.streamMetadataTextForEngine(): String = buildString {
+    currentFilename?.let { appendLine(it) }
+    streamName?.let { appendLine(it) }
+    currentStreamDescription?.let { appendLine(it) }
+    append(title)
+}
+
+internal fun PlayerRuntimeController.streamMetadataLooksHdrOrDv(): Boolean =
+    Regex("""(?i)\b(hdr|hdr10\+?|dv|dolby\s*vision)\b""")
+        .containsMatchIn(streamMetadataTextForEngine())
+
+/**
+ * AVI often stutters on ExoPlayer/TV; prefer libmpv when metadata or URL says AVI.
+ * HDR/DV still keeps Exo even for AVI-looking names.
+ */
+internal fun PlayerRuntimeController.shouldPreferMpvForAviContainer(): Boolean {
+    if (streamMetadataLooksHdrOrDv()) return false
+    val metadataText = streamMetadataTextForEngine()
+    return looksLikeAviContainer(
+        filename = currentFilename,
+        streamName = streamName,
+        streamDescription = currentStreamDescription,
+        streamUrl = currentStreamUrl,
+        metadataText = metadataText
+    )
 }
 
 /**
@@ -2024,8 +2046,10 @@ internal fun looksLikeAviContainer(
         // Path / URL ending in .avi (ignore query string)
         val pathOnly = lower.substringBefore('?').substringBefore('#')
         if (pathOnly.endsWith(".avi")) return true
+        // Also catch "...theatrical.avi" mid-path tokens and basename-only hints
+        if (lower.contains(".avi.") || lower.contains(".avi/") || lower.endsWith(".avi")) return true
         // Release / catalog tokens: "AVI", "XviD", common AVI-era encodes in names
-        if (Regex("""(?i)(?:^|[\s.\-\[(_])avi(?:[\s.\-\])_]|$)""").containsMatchIn(value)) return true
+        if (Regex("""(?i)(?:^|[\s.\-\[(_])(?:avi|xvid)(?:[\s.\-\])_]|$)""").containsMatchIn(value)) return true
     }
     return false
 }

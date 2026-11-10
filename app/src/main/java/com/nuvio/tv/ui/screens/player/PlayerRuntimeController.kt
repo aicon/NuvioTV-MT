@@ -723,8 +723,6 @@ class PlayerRuntimeController(
     internal var traktMappingJob: Job? = null
     internal var hasSentCompletionScrobbleForCurrentItem: Boolean = false
     internal var addonPlayerProgressJob: Job? = null
-    internal var addonPlayerControlJob: Job? = null
-    internal var addonPlayerCommandJob: Job? = null
     internal var addonPlayerEventsEnabled: Boolean = true
     internal var addonPlayerProgressIntervalSeconds: Int = 30
 

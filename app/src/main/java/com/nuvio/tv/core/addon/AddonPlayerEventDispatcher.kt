@@ -73,15 +73,10 @@ class AddonPlayerEventDispatcher @Inject constructor(
                     runCatching {
                         val request = Request.Builder().url(url).get().build()
                         requestClient.newCall(request).execute().use { response ->
-                            val body = response.body?.string().orEmpty()
                             Log.d(
                                 TAG,
                                 "player event action=$normalizedAction addon=${addon.id} code=${response.code}"
                             )
-                            parseRemoteCommand(body)?.let { command ->
-                                Log.i(TAG, "remote command=$command via player event addon=${addon.id}")
-                                AddonPlayerRemoteCommands.offer(command)
-                            }
                         }
                     }.onFailure { err ->
                         Log.d(TAG, "player event failed addon=${addon.id} action=$normalizedAction: ${err.message}")
@@ -89,42 +84,6 @@ class AddonPlayerEventDispatcher @Inject constructor(
                 }
             }.onFailure { err ->
                 Log.d(TAG, "player event dispatch aborted: ${err.message}")
-            }
-        }
-    }
-
-    /**
-     * Poll Yamtrack scrobbler addons for a pending pause/resume command.
-     * Runs even while the local player is paused so resume from the web strip works.
-     */
-    fun pollRemoteCommands(enabled: Boolean) {
-        if (!enabled) return
-        scope.launch {
-            runCatching {
-                val addons = withTimeoutOrNull(2_000L) {
-                    addonRepository.getInstalledAddons().first()
-                }?.enabledAddons().orEmpty() ?: return@launch
-                val targets = addons.filter { addon ->
-                    addon.resources.any { it.name.equals("player", ignoreCase = true) }
-                }
-                for (addon in targets) {
-                    val url = buildPlaybackControlUrl(addon.baseUrl) ?: continue
-                    runCatching {
-                        val request = Request.Builder().url(url).get().build()
-                        requestClient.newCall(request).execute().use { response ->
-                            if (!response.isSuccessful) return@use
-                            val body = response.body?.string().orEmpty()
-                            parseRemoteCommand(body)?.let { command ->
-                                Log.i(TAG, "remote command=$command via playback-control addon=${addon.id}")
-                                AddonPlayerRemoteCommands.offer(command)
-                            }
-                        }
-                    }.onFailure { err ->
-                        Log.d(TAG, "playback-control poll failed addon=${addon.id}: ${err.message}")
-                    }
-                }
-            }.onFailure { err ->
-                Log.d(TAG, "playback-control poll aborted: ${err.message}")
             }
         }
     }
@@ -172,21 +131,6 @@ class AddonPlayerEventDispatcher @Inject constructor(
                 if (durationMs != null) append("&duration=").append(durationMs)
             }
             return "$base/player/$type/$encodedId/$extras.json"
-        }
-
-        fun buildPlaybackControlUrl(baseUrl: String): String? {
-            val base = baseUrl.trim().trimEnd('/')
-            if (base.isEmpty()) return null
-            return "$base/playback-control.json"
-        }
-
-        fun parseRemoteCommand(body: String): String? {
-            val trimmed = body.trim()
-            if (trimmed.isEmpty() || trimmed == "{}") return null
-            // Tiny JSON parse without pulling a JSON library into this hot path.
-            val match = Regex(""""command"\s*:\s*"([^"]+)"""").find(trimmed) ?: return null
-            val command = match.groupValues[1].trim().lowercase()
-            return command.takeIf { it in setOf("pause", "resume", "play", "start") }
         }
 
         private fun urlEncode(value: String): String =

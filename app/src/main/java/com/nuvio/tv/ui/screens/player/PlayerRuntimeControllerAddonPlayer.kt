@@ -1,12 +1,9 @@
 package com.nuvio.tv.ui.screens.player
 
 import android.util.Log
-import com.nuvio.tv.core.addon.AddonPlayerRemoteCommands
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 internal fun PlayerRuntimeController.emitAddonPlayerEvent(action: String) {
     val videoId = resolveAddonPlayerVideoId() ?: run {
@@ -39,86 +36,11 @@ internal fun PlayerRuntimeController.startAddonPlayerProgressTicker() {
             emitAddonPlayerEvent("progress")
         }
     }
-    // Control poll must stay alive while paused so Yamtrack resume still arrives.
-    ensureAddonPlayerControlSession()
 }
 
 internal fun PlayerRuntimeController.stopAddonPlayerProgressTicker() {
     addonPlayerProgressJob?.cancel()
     addonPlayerProgressJob = null
-}
-
-internal fun PlayerRuntimeController.ensureAddonPlayerControlSession() {
-    if (!addonPlayerEventsEnabled) return
-    if (addonPlayerControlJob?.isActive != true) {
-        startAddonPlayerControlPoller()
-    }
-    if (addonPlayerCommandJob?.isActive != true) {
-        startAddonPlayerCommandCollector()
-    }
-}
-
-internal fun PlayerRuntimeController.stopAddonPlayerControlSession() {
-    stopAddonPlayerProgressTicker()
-    stopAddonPlayerControlPoller()
-    stopAddonPlayerCommandCollector()
-}
-
-internal fun PlayerRuntimeController.startAddonPlayerControlPoller() {
-    addonPlayerControlJob?.cancel()
-    if (!addonPlayerEventsEnabled) return
-    addonPlayerControlJob = scope.launch {
-        while (isActive) {
-            if (addonPlayerEventsEnabled) {
-                addonPlayerEventDispatcher.pollRemoteCommands(enabled = true)
-            }
-            delay(2_000L)
-        }
-    }
-}
-
-internal fun PlayerRuntimeController.stopAddonPlayerControlPoller() {
-    addonPlayerControlJob?.cancel()
-    addonPlayerControlJob = null
-}
-
-internal fun PlayerRuntimeController.startAddonPlayerCommandCollector() {
-    addonPlayerCommandJob?.cancel()
-    addonPlayerCommandJob = scope.launch {
-        AddonPlayerRemoteCommands.commands.collect { command ->
-            applyAddonPlayerRemoteCommand(command)
-        }
-    }
-}
-
-internal fun PlayerRuntimeController.stopAddonPlayerCommandCollector() {
-    addonPlayerCommandJob?.cancel()
-    addonPlayerCommandJob = null
-}
-
-internal suspend fun PlayerRuntimeController.applyAddonPlayerRemoteCommand(command: String) {
-    Log.i(PlayerRuntimeController.TAG, "addon remote command=$command")
-    withContext(Dispatchers.Main) {
-        when (command) {
-            "pause" -> {
-                runCatching {
-                    _exoPlayer?.playWhenReady = false
-                    setPlaybackPaused(true)
-                    userPausedManually = true
-                }
-                emitAddonPlayerEvent("pause")
-            }
-            "resume", "play", "start" -> {
-                runCatching {
-                    userPausedManually = false
-                    _exoPlayer?.playWhenReady = true
-                    setPlaybackPaused(false)
-                    startAddonPlayerProgressTicker()
-                }
-                emitAddonPlayerEvent("start")
-            }
-        }
-    }
 }
 
 internal fun PlayerRuntimeController.resolveAddonPlayerVideoId(): String? {
