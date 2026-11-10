@@ -10,6 +10,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL_v3-green.svg)](LICENSE)
 [![Companion of](https://img.shields.io/badge/companion-MediaTrail-orange.svg)](https://github.com/aicon/MediaTrail)
 [![Upstream](https://img.shields.io/badge/upstream-NuvioTV-purple.svg)](https://github.com/NuvioMedia/NuvioTV)
+[![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=ko-fi)](https://ko-fi.com/aiconwg)
 
 ---
 
@@ -79,6 +80,14 @@ cd NuvioTV-MT
 - **`main`:** Tracks upstream NuvioTV stable release tags.
 - **`dev`:** Tracks upstream NuvioTV beta release tags.
 - Upstream tags are cleanly merged into respective branches rather than reset, permanently preserving NuvioTV-MT custom features and branding.
+
+---
+
+## ☕ Support
+
+If you enjoy NuvioTV-MT and want to support its maintenance and ongoing development:
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-ff5e5b?style=for-the-badge&logo=ko-fi)](https://ko-fi.com/aiconwg)
 
 ---
 

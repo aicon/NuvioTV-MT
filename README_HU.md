@@ -10,6 +10,7 @@
 [![Licenc: GPL v3](https://img.shields.io/badge/Licenc-GPL_v3-green.svg)](LICENSE)
 [![MediaTrail kiegészítő](https://img.shields.io/badge/kiegészítő-MediaTrail-orange.svg)](https://github.com/aicon/MediaTrail)
 [![Upstream](https://img.shields.io/badge/upstream-NuvioTV-purple.svg)](https://github.com/NuvioMedia/NuvioTV)
+[![Támogatás Ko-fi-n](https://img.shields.io/badge/Ko--fi-Támogatás-ff5e5b?logo=ko-fi)](https://ko-fi.com/aiconwg)
 
 ---
 
@@ -79,6 +80,14 @@ cd NuvioTV-MT
 - **`main`:** A hivatalos NuvioTV stabil kiadási címkéit követi.
 - **`dev`:** A hivatalos NuvioTV béta kiadási címkéit követi.
 - A hivatalos verziók beolvasztással (merge) kerülnek át, így a fork saját módosításai és funkciói folyamatosan megmaradnak.
+
+---
+
+## ☕ Támogatás
+
+Amennyiben hasznosnak találod a NuvioTV-MT-t és szeretnéd támogatni a fejlesztést és karbantartást:
+
+[![Ko-fi támogatás](https://img.shields.io/badge/Ko--fi-Támogatás-ff5e5b?style=for-the-badge&logo=ko-fi)](https://ko-fi.com/aiconwg)
 
 ---
 
