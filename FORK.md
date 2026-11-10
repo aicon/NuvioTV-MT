@@ -50,12 +50,19 @@ origin    https://github.com/aicon/NuvioTV-MT.git
 upstream  https://github.com/NuvioMedia/NuvioTV.git
 ```
 
-Sync from upstream when needed:
+Stable tags merge into `main`. Beta tags merge into `dev`. Merge the tag. Do not reset either branch onto upstream, so the product-fork changes stay.
+
+`upstream/dev` is not a release. It can sit ahead of both tags. Do not merge that branch itself.
 
 ```bash
-git fetch upstream
-git merge upstream/dev
+git fetch upstream --tags
+git checkout main
+git merge <stable-tag>
+git checkout dev
+git merge <beta-tag>
 ```
+
+Current tags: stable `1.1.0` on `main`, beta `1.1.0-beta.13` on `dev`.
 
 ## Related services
 
