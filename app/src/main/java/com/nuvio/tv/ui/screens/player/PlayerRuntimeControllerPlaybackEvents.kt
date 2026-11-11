@@ -1100,6 +1100,10 @@ internal fun PlayerRuntimeController.emitScrobbleStart() {
         currentScrobbleItem = buildScrobbleItem()
         val item = currentScrobbleItem
         if (item == null) {
+            // Allow a later start once meta/ids become available; do not stick the gate.
+            if (requestGeneration == scrobbleStartRequestGeneration) {
+                hasRequestedScrobbleStartForCurrentItem = false
+            }
             logScrobbleDiagnostic("start_cancelled", "reason=no_scrobble_item requestGeneration=$requestGeneration")
             return@launch
         }
@@ -1123,8 +1127,6 @@ internal fun PlayerRuntimeController.emitScrobbleStart() {
         }
         hasSentScrobbleStartForCurrentItem = true
         logScrobbleDiagnostic("start_recorded", "requestGeneration=$requestGeneration")
-        emitAddonPlayerEvent("start")
-        startAddonPlayerProgressTicker()
     }
 }
 
@@ -1160,8 +1162,6 @@ internal fun PlayerRuntimeController.emitScrobbleStop(progressPercent: Float? = 
     hasRequestedScrobbleStartForCurrentItem = false
     hasSentScrobbleStartForCurrentItem = false
     logScrobbleDiagnostic("stop_state_reset", "progress=$percent")
-    stopAddonPlayerProgressTicker()
-    emitAddonPlayerEvent("stop")
 }
 
 internal fun PlayerRuntimeController.emitScrobblePause(progressPercent: Float? = null) {
@@ -1197,8 +1197,6 @@ internal fun PlayerRuntimeController.emitScrobblePause(progressPercent: Float? =
     hasRequestedScrobbleStartForCurrentItem = false
     hasSentScrobbleStartForCurrentItem = false
     logScrobbleDiagnostic("pause_state_reset", "progress=$percent")
-    stopAddonPlayerProgressTicker()
-    emitAddonPlayerEvent("pause")
 }
 
 internal fun PlayerRuntimeController.emitCompletionScrobbleStop(progressPercent: Float) {
@@ -1249,6 +1247,7 @@ internal fun PlayerRuntimeController.emitSeekScrobbleRestart(progressPercent: Fl
 internal fun PlayerRuntimeController.flushPlaybackSnapshotForSwitchOrExit() {
     logScrobbleDiagnostic("flush_switch_or_exit")
     emitStopScrobbleForCurrentProgress()
+    notifyAddonPlayerStopped()
     saveWatchProgress()
 }
 
@@ -1447,6 +1446,7 @@ fun PlayerRuntimeController.onEvent(
                     setPlaybackPaused(true)
                     stopProgressUpdates()
                     stopWatchProgressSaving()
+                    notifyAddonPlayerPaused()
                     emitPauseScrobbleForCurrentProgress()
                     schedulePauseOverlay()
                 } else {
@@ -1456,6 +1456,7 @@ fun PlayerRuntimeController.onEvent(
                     startProgressUpdates()
                     startWatchProgressSaving()
                     scheduleHideControls()
+                    notifyAddonPlayerStarted()
                     emitScrobbleStart()
                 }
                 publishPartyPlayback(paused = playing)
