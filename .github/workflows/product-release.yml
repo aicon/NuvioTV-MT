@@ -13,8 +13,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: product-release-${{ github.ref }}
-  cancel-in-progress: false
+  # Bump the group suffix if a zombie run ever sticks the queue (cancel-in-progress cannot clear it).
+  group: product-release-${{ github.ref }}-v2
+  cancel-in-progress: true
 
 jobs:
   release:
