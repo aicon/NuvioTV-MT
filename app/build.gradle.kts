@@ -137,8 +137,6 @@ android {
         targetSdk = 36
         versionCode = 1086
         versionName = "1.1.5"
-        versionCode = 1086
-        versionName = "1.1.5"
 
         buildConfigField("String", "PARENTAL_GUIDE_API_URL", "\"${localProperties.getProperty("PARENTAL_GUIDE_API_URL", "")}\"")
         buildConfigField("String", "INTRODB_API_URL", "\"${localProperties.getProperty("INTRODB_API_URL", "")}\"")
