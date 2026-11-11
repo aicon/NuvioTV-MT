@@ -12,8 +12,6 @@
 [![Upstream](https://img.shields.io/badge/upstream-NuvioTV-purple.svg)](https://github.com/NuvioMedia/NuvioTV)
 [![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=ko-fi)](https://ko-fi.com/aiconwg)
 
-<a href="https://github.com/aicon/NuvioTV-MT/releases/latest"><img src="badges/get-it-on-github.png" alt="Get it on GitHub" height="80"></a>
-
 ---
 
 ## Overview
@@ -60,6 +58,8 @@ Features an integrated updater that tracks releases from `aicon/NuvioTV-MT`:
 ## 📥 Download & Installation
 
 1. Open the **[latest release](https://github.com/aicon/NuvioTV-MT/releases/latest)** and download the APK for the TV.
+
+   <a href="https://github.com/aicon/NuvioTV-MT/releases/latest"><img src="badges/get-it-on-github.png" alt="Get it on GitHub" height="80"></a>
 2. Download the APK corresponding to your Android TV's architecture (typically `arm64-v8a` or `armeabi-v7a`).
 3. Sideload the APK onto your Android TV box or Google TV device using your preferred tool (ADB, Downloader, Send Files to TV, or USB drive).
 
