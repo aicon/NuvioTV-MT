@@ -28,6 +28,7 @@ import javax.inject.Singleton
 @Singleton
 class AddonPlayerEventDispatcher @Inject constructor(
     private val addonRepository: AddonRepository,
+    private val playerDeviceIdentity: PlayerDeviceIdentity,
     @Named("addonPermissive") private val okHttpClient: OkHttpClient
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -68,7 +69,9 @@ class AddonPlayerEventDispatcher @Inject constructor(
                         videoId = videoId,
                         action = normalizedAction,
                         currentTimeMs = currentTimeMs,
-                        durationMs = durationMs
+                        durationMs = durationMs,
+                        deviceId = playerDeviceIdentity.deviceId(),
+                        deviceName = playerDeviceIdentity.deviceName(),
                     ) ?: continue
                     runCatching {
                         val request = Request.Builder().url(url).get().build()
@@ -120,7 +123,9 @@ class AddonPlayerEventDispatcher @Inject constructor(
             videoId: String,
             action: String,
             currentTimeMs: Long?,
-            durationMs: Long?
+            durationMs: Long?,
+            deviceId: String? = null,
+            deviceName: String? = null,
         ): String? {
             val base = baseUrl.trim().trimEnd('/')
             if (base.isEmpty()) return null
@@ -129,6 +134,14 @@ class AddonPlayerEventDispatcher @Inject constructor(
                 append("action=").append(urlEncode(action))
                 if (currentTimeMs != null) append("&currentTime=").append(currentTimeMs)
                 if (durationMs != null) append("&duration=").append(durationMs)
+                val resolvedDeviceId = deviceId?.trim().orEmpty()
+                if (resolvedDeviceId.isNotEmpty()) {
+                    append("&deviceId=").append(urlEncode(resolvedDeviceId))
+                }
+                val resolvedDeviceName = deviceName?.trim().orEmpty()
+                if (resolvedDeviceName.isNotEmpty()) {
+                    append("&deviceName=").append(urlEncode(resolvedDeviceName))
+                }
             }
             return "$base/player/$type/$encodedId/$extras.json"
         }
