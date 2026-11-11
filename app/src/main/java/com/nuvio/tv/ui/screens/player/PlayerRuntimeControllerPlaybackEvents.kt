@@ -1270,6 +1270,9 @@ internal fun PlayerRuntimeController.scheduleProgressSyncAfterSeek() {
     seekProgressSyncJob = scope.launch {
         delay(seekProgressSyncDebounceMs)
         saveWatchProgress()
+        // MediaTrail / player addons only hear the periodic ticker unless seek
+        // also emits progress; without this the strip lags until pause/play.
+        emitAddonPlayerEvent("progress")
 
         val progressPercent = currentPlaybackProgressPercent()
         emitSeekScrobbleRestart(progressPercent = progressPercent)
