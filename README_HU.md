@@ -12,6 +12,8 @@
 [![Upstream](https://img.shields.io/badge/upstream-NuvioTV-purple.svg)](https://github.com/NuvioMedia/NuvioTV)
 [![Támogatás Ko-fi-n](https://img.shields.io/badge/Ko--fi-Támogatás-ff5e5b?logo=ko-fi)](https://ko-fi.com/aiconwg)
 
+<a href="https://github.com/aicon/NuvioTV-MT/releases/latest"><img src="badges/get-it-on-github.png" alt="Get it on GitHub" height="80"></a>
+
 ---
 
 ## Áttekintés
@@ -57,7 +59,7 @@ Beépített frissítőmodul, amely közvetlenül az `aicon/NuvioTV-MT` GitHub ki
 
 ## 📥 Letöltés és Telepítés
 
-1. Látogass el a **[Releases](https://github.com/aicon/NuvioTV-MT/releases)** menüpontra.
+1. Nyisd meg a **[legfrissebb kiadást](https://github.com/aicon/NuvioTV-MT/releases/latest)**, és töltsd le a tévéhez illő APK-t.
 2. Töltsd le a készülékednek megfelelő APK fájlt (Android TV esetén tipikusan `arm64-v8a` vagy `armeabi-v7a`).
 3. Telepítsd fel az APK-t az Android TV-re a megszokott módszerrel (ADB, Downloader alkalmazás, Send Files to TV, vagy pendrive segítségével).
 
