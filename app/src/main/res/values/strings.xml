@@ -777,7 +777,7 @@
     <string name="playback_auto_switch_internal_player_on_error">Auto-switch engine on startup error</string>
     <string name="playback_auto_switch_internal_player_on_error_sub">If stream startup fails, switch between ExoPlayer and libmpv automatically.</string>
     <string name="playback_addon_player_events">Addon player events</string>
-    <string name="playback_addon_player_events_sub">Send start, pause, stop, and progress to installed addons that declare the player resource (e.g. MediaTrail scrobbler).</string>
+    <string name="playback_addon_player_events_sub">Send start, pause, stop, and progress to installed addons that declare the player resource (e.g. the MediaTrail addon for multi-device Now Watching).</string>
     <string name="playback_addon_player_progress_interval">Progress update interval</string>
     <string name="playback_addon_player_progress_interval_sub">How often to send progress while playing. No updates while paused. Default 30 seconds.</string>
     <string name="playback_addon_player_progress_interval_value">%1$d seconds</string>
