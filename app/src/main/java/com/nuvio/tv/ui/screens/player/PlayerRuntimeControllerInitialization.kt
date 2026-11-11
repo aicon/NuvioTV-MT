@@ -1432,6 +1432,7 @@ internal fun PlayerRuntimeController.initializePlayer(
                             startWatchProgressSaving()
                             scheduleHideControls()
                             tryShowParentalGuide()
+                            notifyAddonPlayerStarted()
                             emitScrobbleStart()
                         } else {
                             if (userPausedManually) schedulePauseOverlay() else cancelPauseOverlay()
@@ -1443,8 +1444,14 @@ internal fun PlayerRuntimeController.initializePlayer(
                                 saveWatchProgressIfNeeded()
                             } else {
                                 when (trackingActionForNonPlayingState(playbackState)) {
-                                    TrackingScrobbleAction.PAUSE -> emitPauseScrobbleForCurrentProgress()
-                                    TrackingScrobbleAction.STOP -> emitStopScrobbleForCurrentProgress()
+                                    TrackingScrobbleAction.PAUSE -> {
+                                        notifyAddonPlayerPaused()
+                                        emitPauseScrobbleForCurrentProgress()
+                                    }
+                                    TrackingScrobbleAction.STOP -> {
+                                        notifyAddonPlayerStopped()
+                                        emitStopScrobbleForCurrentProgress()
+                                    }
                                     TrackingScrobbleAction.START, null -> Unit
                                 }
                                 saveWatchProgress()

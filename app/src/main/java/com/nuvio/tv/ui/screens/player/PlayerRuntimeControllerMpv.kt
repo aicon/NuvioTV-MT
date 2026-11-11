@@ -59,6 +59,7 @@ internal fun PlayerRuntimeController.attachMpvView(view: NuvioMpvSurfaceView?) {
         startWatchProgressSaving()
         updateMpvAvailableTracks()
         scheduleHideControls()
+        notifyAddonPlayerStarted()
         emitScrobbleStart()
     }.onFailure {
         val technical = it.message?.trim()?.takeIf { message -> message.isNotEmpty() }
@@ -184,6 +185,7 @@ internal fun PlayerRuntimeController.initializeMpvPlayer(
         startWatchProgressSaving()
         updateMpvAvailableTracks()
         scheduleHideControls()
+        notifyAddonPlayerStarted()
         emitScrobbleStart()
     }.onFailure { error ->
         Log.e(PlayerRuntimeController.TAG, "libmpv initialize failed: ${error.message}", error)

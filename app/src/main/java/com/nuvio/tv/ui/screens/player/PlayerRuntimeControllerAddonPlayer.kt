@@ -1,6 +1,7 @@
 package com.nuvio.tv.ui.screens.player
 
 import android.util.Log
+import com.nuvio.tv.data.mediaserver.ServerItemRef
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -22,6 +23,22 @@ internal fun PlayerRuntimeController.emitAddonPlayerEvent(action: String) {
         durationMs = durationMs,
         enabled = addonPlayerEventsEnabled
     )
+}
+
+/** Playback-driven: must not wait for Trakt/SIMKL scrobble success. */
+internal fun PlayerRuntimeController.notifyAddonPlayerStarted() {
+    emitAddonPlayerEvent("start")
+    startAddonPlayerProgressTicker()
+}
+
+internal fun PlayerRuntimeController.notifyAddonPlayerPaused() {
+    stopAddonPlayerProgressTicker()
+    emitAddonPlayerEvent("pause")
+}
+
+internal fun PlayerRuntimeController.notifyAddonPlayerStopped() {
+    stopAddonPlayerProgressTicker()
+    emitAddonPlayerEvent("stop")
 }
 
 internal fun PlayerRuntimeController.startAddonPlayerProgressTicker() {
@@ -62,17 +79,34 @@ internal fun PlayerRuntimeController.resolveAddonPlayerVideoId(): String? {
 private fun PlayerRuntimeController.resolveImdbIdForAddonPlayer(): String? {
     val direct = listOfNotNull(contentId, currentVideoId)
         .map { it.trim() }
-        .firstOrNull { it.startsWith("tt") }
-        ?.substringBefore(':')
-        ?.takeIf { it.matches(Regex("""tt\d+""")) }
+        .firstNotNullOfOrNull { candidate ->
+            candidate.substringBefore(':')
+                .takeIf { it.matches(IMDB_ID_REGEX) }
+        }
     if (direct != null) return direct
 
+    val scrobbleImdb = currentScrobbleItem?.ids?.imdb
+        ?.trim()
+        ?.substringBefore(':')
+        ?.takeIf { it.matches(IMDB_ID_REGEX) }
+    if (scrobbleImdb != null) return scrobbleImdb
+
+    val rawId = contentId ?: return null
     val type = contentType ?: "movie"
-    val id = contentId ?: return null
-    val metaImdb = metaRepository.getCachedMeta(type, id)?.imdbId
-        ?: metaRepository.getCachedMeta(type, id.substringBefore(':'))?.imdbId
+    if (ServerItemRef.isServerId(rawId)) {
+        serverImdbId(rawId)
+            ?.trim()
+            ?.substringBefore(':')
+            ?.takeIf { it.matches(IMDB_ID_REGEX) }
+            ?.let { return it }
+    }
+
+    val metaImdb = metaRepository.getCachedMeta(type, rawId)?.imdbId
+        ?: metaRepository.getCachedMeta(type, rawId.substringBefore(':'))?.imdbId
     return metaImdb
         ?.trim()
         ?.substringBefore(':')
-        ?.takeIf { it.startsWith("tt") && it.matches(Regex("""tt\d+""")) }
+        ?.takeIf { it.matches(IMDB_ID_REGEX) }
 }
+
+private val IMDB_ID_REGEX = Regex("""tt\d+""")
