@@ -1,6 +1,7 @@
 package com.nuvio.tv.core.addon
 
 import android.content.Context
+import android.os.Build
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
 import javax.inject.Inject
@@ -22,7 +23,14 @@ class PlayerDeviceIdentity @Inject constructor(
         return created
     }
 
-    fun deviceName(): String = "TV"
+    fun deviceName(): String {
+        val model = Build.MODEL.trim()
+        return if (model.isEmpty() || model.equals("TV", ignoreCase = true)) {
+            "TV"
+        } else {
+            "TV · $model"
+        }
+    }
 
     companion object {
         private const val PREFERENCES_NAME = "nuvio_player_device"
