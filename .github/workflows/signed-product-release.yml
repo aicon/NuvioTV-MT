@@ -238,19 +238,12 @@ jobs:
           fi
           printf 'APKs:\n'
           printf '  %s\n' "${release_apks[@]}"
-          if git rev-parse -q --verify "refs/tags/${RELEASE_TAG}" >/dev/null; then
-            existing="$(git rev-parse "refs/tags/${RELEASE_TAG}^{}")"
-            if [[ "${existing}" != "${GITHUB_SHA}" ]]; then
-              echo "Tag ${RELEASE_TAG} already points at ${existing}." >&2
-              exit 1
-            fi
-          else
-            git tag "${RELEASE_TAG}" "${GITHUB_SHA}"
-          fi
-          git push origin "refs/tags/${RELEASE_TAG}"
+          # Create the tag via the Releases API (not git push). Pushing a tag whose
+          # commit touches .github/workflows/* needs the workflows permission, which
+          # GITHUB_TOKEN does not have.
           release_args=(
             "${RELEASE_TAG}"
-            --verify-tag
+            --target "${GITHUB_SHA}"
             --title "${RELEASE_TITLE}"
             --notes-file release-notes.md
           )
