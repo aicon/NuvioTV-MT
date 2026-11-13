@@ -4,7 +4,7 @@
 
 ---
 
-**Önálló Android TV kliens, a [NuvioTV](https://github.com/NuvioMedia/NuvioTV) kiegészített forkja MediaTrail „Most nézem” jelentéssel, intelligens lejátszómotor-választással, független telepíthetőséggel és saját alkalmazáson belüli frissítővel.**
+**A [NuvioTV](https://github.com/NuvioMedia/NuvioTV) forkja a [MediaTrail](https://github.com/aicon/MediaTrail) lehető legszorosabb együttműködésére — „Most nézem”, könyvtári jelölés, watchlist szinkron —, plusz néhány kisebb lejátszó- és UX-javítás.**
 
 [![Verzió](https://img.shields.io/badge/verzió-legfrissebb-blue.svg)](https://github.com/aicon/NuvioTV-MT/releases)
 [![Licenc: GPL v3](https://img.shields.io/badge/Licenc-GPL_v3-green.svg)](LICENSE)
@@ -16,14 +16,14 @@
 
 ## Áttekintés
 
-A NuvioTV-MT a NuvioTV független, közösségi kiadása kifejezetten Android TV és Google TV eszközökre. Megtartja az eredeti Nuvio összes forráskezelési, katalógus- és lejátszási funkcióját, miközben natív kapcsolatot biztosít a **[MediaTrail](https://github.com/aicon/MediaTrail)** rendszerrel, intelligens motorválasztást nyújt a különböző formátumokhoz, és zökkenőmentesen megfér a hivatalos Nuvio alkalmazás mellett.
+Ez a fork azért készült, hogy az Android TV kliens a lehető legszorosabban működjön együtt a **[MediaTrail](https://github.com/aicon/MediaTrail)**-lel: élő „Most nézem”, opcionális könyvtári megjelölés-szinkron, és MediaTrail-listák a főképernyő polcain. Megtartja az upstream streamelést és katalógusokat, a hivatalos NuvioTV (`com.nuvio.tv`) mellé települ, és a [NuvioMobile-MT](https://github.com/aicon/NuvioMobile-MT)-vel ugyanazt a MediaTrail-történetet adja a telefonon. Kisebb pluszok: Auto ExoPlayer/libmpv választás és saját frissítő ehhez a tárolóhoz.
 
 ---
 
 ## ✨ Főbb funkciók és eltérések
 
 ### 1. Párhuzamos telepíthetőség
-- **Csomagnév:** `com.aicon.nuviotv` (debug változat: `com.aicon.nuviotv.debug`).
+- **Csomagnév:** `com.aicon.nuviotv`.
 - Teljesen függetlenül telepíthető a hivatalos NuvioTV (`com.nuvio.tv`) mellé, nem írja felül azt.
 - **Indítóikon neve:** Angol nyelvű rendszeren **Nuvio YT**, magyar nyelvre állított tévén **Nuvio**.
 

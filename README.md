@@ -4,7 +4,7 @@
 
 ---
 
-**An enhanced, independent Android TV client fork of [NuvioTV](https://github.com/NuvioMedia/NuvioTV) featuring MediaTrail Now Watching reporting, intelligent player engine switching, standalone coexistence, and dedicated in-app updates.**
+**A [NuvioTV](https://github.com/NuvioMedia/NuvioTV) fork built for the deepest possible cooperation with [MediaTrail](https://github.com/aicon/MediaTrail) — Now Watching, library marks, watchlist sync — plus a few smaller player and UX fixes.**
 
 [![Release](https://img.shields.io/badge/release-latest-blue.svg)](https://github.com/aicon/NuvioTV-MT/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL_v3-green.svg)](LICENSE)
@@ -16,14 +16,14 @@
 
 ## Overview
 
-NuvioTV-MT is an independent community build of NuvioTV tailored specifically for Android TV. It retains all upstream streaming, catalog, and playback capabilities while introducing deep integration with the **[MediaTrail](https://github.com/aicon/MediaTrail)** ecosystem, a smarter playback engine selector, and the ability to run side-by-side with the official Nuvio app.
+This fork exists so the Android TV client works as tightly as possible with **[MediaTrail](https://github.com/aicon/MediaTrail)**: live Now Watching, optional library mark sync, and home catalog shelves from MediaTrail lists. It keeps upstream streaming and catalogs, installs beside official NuvioTV (`com.nuvio.tv`), and pairs with [NuvioMobile-MT](https://github.com/aicon/NuvioMobile-MT) for the same MediaTrail story on the phone. Smaller extras include Auto ExoPlayer/libmpv routing and an in-app updater for this repository.
 
 ---
 
 ## ✨ Key Additions & Differences
 
 ### 1. Side-by-Side Coexistence
-- **Package Identifier:** `com.aicon.nuviotv` (debug: `com.aicon.nuviotv.debug`).
+- **Package Identifier:** `com.aicon.nuviotv`.
 - Installs completely independently alongside the official NuvioTV app (`com.nuvio.tv`) without overwriting it.
 - **Launcher Names:** Displayed as **Nuvio YT** in English system locales and **Nuvio** in Hungarian locales.
 
