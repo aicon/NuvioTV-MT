@@ -2477,6 +2477,10 @@
     <string name="update_waiting_for_stable">You’ll receive the next stable release when it becomes available</string>
     <string name="update_download_complete">Download complete. Ready to install.</string>
     <string name="update_installed_automatically">Updated automatically while the device was idle</string>
+    <string name="update_ready_channel_name">App updates</string>
+    <string name="update_ready_channel_description">Notifies you when an update has finished installing</string>
+    <string name="update_ready_notification_title">Update ready</string>
+    <string name="update_ready_notification_text">Version %1$s is installed. Tap to open.</string>
     <string name="update_up_to_date">System is up to date. Latest changes:</string>
     <string name="update_close">Close</string>
     <string name="update_open_settings">Open Settings</string>

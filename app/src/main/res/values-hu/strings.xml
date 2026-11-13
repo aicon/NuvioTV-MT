@@ -2469,6 +2469,10 @@
     <string name="update_waiting_for_stable">A következő stabil verziót akkor kapod meg, amikor megjelenik</string>
     <string name="update_download_complete">A letöltés befejeződött. Telepítésre kész.</string>
     <string name="update_installed_automatically">Automatikusan frissítve, amíg az eszköz tétlen volt</string>
+    <string name="update_ready_channel_name">Alkalmazásfrissítések</string>
+    <string name="update_ready_channel_description">Értesít, ha egy frissítés telepítése befejeződött</string>
+    <string name="update_ready_notification_title">Frissítés kész</string>
+    <string name="update_ready_notification_text">A(z) %1$s verzió telepítve. Koppints a megnyitáshoz.</string>
     <string name="update_up_to_date">A rendszer naprakész. Legújabb változások:</string>
     <string name="update_close">Bezárás</string>
     <string name="update_open_settings">Beállítások megnyitása</string>

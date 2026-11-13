@@ -3,6 +3,8 @@
 
     <!-- Lets the in-app updater install its own updates without a confirmation screen on Android 12+. -->
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <!-- Optional: "Update ready — Open" after self-update when background launch is blocked. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application>
         <service
@@ -13,5 +15,14 @@
         <receiver
             android:name=".updater.UpdateInstallResultReceiver"
             android:exported="false" />
+
+        <!-- exported: system delivers MY_PACKAGE_REPLACED to this package only. -->
+        <receiver
+            android:name=".updater.UpdatePackageReplacedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

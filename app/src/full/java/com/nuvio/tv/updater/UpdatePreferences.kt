@@ -40,6 +40,11 @@ class UpdatePreferences @Inject constructor(
     private val downloadedApkPathKey = stringPreferencesKey("downloaded_apk_path")
     private val autoInstalledTagKey = stringPreferencesKey("auto_installed_release_tag")
     private val autoInstallNoticeEnabledKey = booleanPreferencesKey("auto_install_notice_enabled")
+    private val pendingInstallSourceKey = stringPreferencesKey("pending_install_source")
+    private val pendingInstallTagKey = stringPreferencesKey("pending_install_tag")
+    private val pendingInstallVersionCodeKey = longPreferencesKey("pending_install_version_code")
+    private val updateReadyNoticeTagKey = stringPreferencesKey("update_ready_notice_tag")
+    private val awaitForegroundConfirmKey = booleanPreferencesKey("await_foreground_confirm")
 
     val ignoredTag: Flow<String?> = dataStore.data.map { prefs ->
         prefs[ignoredTagKey]
@@ -76,6 +81,33 @@ class UpdatePreferences @Inject constructor(
 
     val autoInstallNoticeEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
         prefs[autoInstallNoticeEnabledKey] ?: true
+    }
+
+    val pendingInstall: Flow<PendingUpdateInstall?> = dataStore.data.map { prefs ->
+        val source = when (prefs[pendingInstallSourceKey]) {
+            PendingUpdateInstall.Source.MANUAL.name -> PendingUpdateInstall.Source.MANUAL
+            PendingUpdateInstall.Source.IDLE.name -> PendingUpdateInstall.Source.IDLE
+            else -> null
+        }
+        val tag = prefs[pendingInstallTagKey]
+        if (source == null || tag.isNullOrBlank()) {
+            null
+        } else {
+            PendingUpdateInstall(
+                source = source,
+                tag = tag,
+                versionCode = prefs[pendingInstallVersionCodeKey]?.toInt()
+            )
+        }
+    }
+
+    /** Manual update finished but the app was not brought to the foreground; show on next open. */
+    val updateReadyNoticeTag: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[updateReadyNoticeTagKey]
+    }
+
+    val awaitForegroundConfirm: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[awaitForegroundConfirmKey] ?: false
     }
 
     suspend fun getOrInitializeUpdateChannel(): UpdateChannel {
@@ -134,6 +166,38 @@ class UpdatePreferences @Inject constructor(
     suspend fun setAutoInstalledTag(tag: String?) {
         dataStore.edit { prefs ->
             if (tag == null) prefs.remove(autoInstalledTagKey) else prefs[autoInstalledTagKey] = tag
+        }
+    }
+
+    suspend fun setPendingInstall(pending: PendingUpdateInstall?) {
+        dataStore.edit { prefs ->
+            if (pending == null) {
+                prefs.remove(pendingInstallSourceKey)
+                prefs.remove(pendingInstallTagKey)
+                prefs.remove(pendingInstallVersionCodeKey)
+            } else {
+                prefs[pendingInstallSourceKey] = pending.source.name
+                prefs[pendingInstallTagKey] = pending.tag
+                if (pending.versionCode != null) {
+                    prefs[pendingInstallVersionCodeKey] = pending.versionCode.toLong()
+                } else {
+                    prefs.remove(pendingInstallVersionCodeKey)
+                }
+            }
+        }
+    }
+
+    suspend fun clearPendingInstall() = setPendingInstall(null)
+
+    suspend fun setUpdateReadyNoticeTag(tag: String?) {
+        dataStore.edit { prefs ->
+            if (tag == null) prefs.remove(updateReadyNoticeTagKey) else prefs[updateReadyNoticeTagKey] = tag
+        }
+    }
+
+    suspend fun setAwaitForegroundConfirm(awaiting: Boolean) {
+        dataStore.edit { prefs ->
+            if (awaiting) prefs[awaitForegroundConfirmKey] = true else prefs.remove(awaitForegroundConfirmKey)
         }
     }
 

@@ -73,6 +73,8 @@ class UpdateViewModel @Inject constructor(
                 )
             }
             downloadStore.clearIfInstalled()
+            reconcileStalePendingInstall()
+            consumeUpdateReadyNotice()
             consumeAutoInstalledUpdate()
             syncBackgroundJobs()
             if (enabled && !BuildConfig.IS_DEBUG_BUILD) {
@@ -317,14 +319,71 @@ class UpdateViewModel @Inject constructor(
         }
 
         _uiState.update { it.copy(showUnknownSourcesDialog = false) }
+        // Notification channel / permission while still in foreground — post-install open may need it.
+        UpdateReadyNotifier.ensureChannel(context)
+        UpdateReadyNotifier.canNotify(context)
+
+        val updateTagFromUi = _uiState.value.update?.tag
         viewModelScope.launch(Dispatchers.IO) {
+            val updateTag = updateTagFromUi
+                ?: updatePreferences.downloadedUpdate.first()?.first
+            if (updateTag.isNullOrBlank()) {
+                Log.w(TAG, "No update tag for pending install; aborting")
+                return@launch
+            }
+            val versionCode = UpdateApkVersion.versionCodeOf(context, apkFile)
+            updatePreferences.setPendingInstall(
+                PendingUpdateInstall(
+                    source = PendingUpdateInstall.Source.MANUAL,
+                    tag = updateTag,
+                    versionCode = versionCode
+                )
+            )
             runCatching { ApkInstaller.install(context, apkFile, background = false) }
                 .onFailure {
                     Log.w(TAG, "Session install failed, falling back to the system installer", it)
                     runCatching { ApkInstaller.launchSystemInstaller(context, apkFile) }
-                        .onFailure { error -> Log.w(TAG, "System installer failed", error) }
+                        .onFailure { error ->
+                            Log.w(TAG, "System installer failed", error)
+                            updatePreferences.clearPendingInstall()
+                        }
                 }
         }
+    }
+
+    /**
+     * System-installer cancel leaves a pending marker with no callback. If we are still on the old
+     * build at next open, drop it so a later update is not mis-attributed.
+     */
+    private suspend fun reconcileStalePendingInstall() {
+        val pending = updatePreferences.pendingInstall.first() ?: return
+        if (UpdateApkVersion.matchesInstalled(pending.tag, pending.versionCode)) {
+            updatePreferences.clearPendingInstall()
+            when (pending.source) {
+                PendingUpdateInstall.Source.IDLE -> updatePreferences.setAutoInstalledTag(pending.tag)
+                PendingUpdateInstall.Source.MANUAL -> updatePreferences.setUpdateReadyNoticeTag(pending.tag)
+            }
+            return
+        }
+        Log.i(TAG, "Clearing aborted pending install ${pending.tag} (still on ${BuildConfig.VERSION_NAME})")
+        updatePreferences.clearPendingInstall()
+    }
+
+    private suspend fun consumeUpdateReadyNotice() {
+        val tag = updatePreferences.updateReadyNoticeTag.first() ?: return
+        updatePreferences.setUpdateReadyNoticeTag(null)
+        if (VersionUtils.isRemoteNewer(tag, BuildConfig.VERSION_NAME)) return
+        if (VersionUtils.isRemoteNewer(BuildConfig.VERSION_NAME, tag)) return
+        val installed = AppUpdate(
+            tag = tag,
+            title = tag,
+            notes = "",
+            releaseUrl = null,
+            assetName = "",
+            assetUrl = "",
+            assetSizeBytes = null
+        )
+        _uiState.update { it.copy(installedUpdate = installed, showBanner = true) }
     }
 
     // Shows the "updated" banner once after the idle job installed a release, then forgets it.

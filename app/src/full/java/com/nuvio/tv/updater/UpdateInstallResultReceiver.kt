@@ -7,7 +7,15 @@ import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
 import android.util.Log
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 private const val TAG = "UpdateInstall"
 
@@ -15,8 +23,18 @@ private const val TAG = "UpdateInstall"
  * Receives the outcome of an update install session. A confirmation request is shown only for installs the user
  * started; a background install that still needs confirmation is dropped and the downloaded APK waits for the banner.
  * A failed session is retried without dex metadata, then falls back to the system installer screen.
+ *
+ * Successful package replacement is handled by [UpdatePackageReplacedReceiver]; this receiver clears the pending
+ * install marker when a session is abandoned or definitively fails (so a cancelled system-installer attempt is
+ * cleaned up on the next launch if replace never arrives).
  */
 class UpdateInstallResultReceiver : BroadcastReceiver() {
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface PrefsEntryPoint {
+        fun updatePreferences(): UpdatePreferences
+    }
 
     override fun onReceive(context: Context, intent: Intent) {
         val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
@@ -32,6 +50,7 @@ class UpdateInstallResultReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 if (background) {
                     runCatching { context.packageManager.packageInstaller.abandonSession(sessionId) }
+                    clearPending(context)
                 } else {
                     confirmationIntent(intent)?.let { confirm ->
                         runCatching { context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
@@ -43,18 +62,40 @@ class UpdateInstallResultReceiver : BroadcastReceiver() {
                     }
                 }
             }
-            else -> retryAfterFailure(context, apkFile, background, withDexMetadata)
+            else -> {
+                if (status == PackageInstaller.STATUS_FAILURE_ABORTED) {
+                    clearPending(context)
+                }
+                retryAfterFailure(context, apkFile, background, withDexMetadata)
+            }
+        }
+    }
+
+    private fun clearPending(context: Context) {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            runCatching {
+                EntryPointAccessors.fromApplication(context.applicationContext, PrefsEntryPoint::class.java)
+                    .updatePreferences()
+                    .clearPendingInstall()
+            }
         }
     }
 
     private fun retryAfterFailure(context: Context, apkFile: File?, background: Boolean, withDexMetadata: Boolean) {
-        if (apkFile == null || !apkFile.exists()) return
+        if (apkFile == null || !apkFile.exists()) {
+            clearPending(context)
+            return
+        }
         runCatching {
             when {
                 withDexMetadata -> ApkInstaller.install(context, apkFile, background, withDexMetadata = false)
                 !background -> ApkInstaller.launchSystemInstaller(context, apkFile)
+                else -> clearPending(context)
             }
-        }.onFailure { Log.w(TAG, "Update install retry failed", it) }
+        }.onFailure {
+            Log.w(TAG, "Update install retry failed", it)
+            clearPending(context)
+        }
     }
 
     private fun confirmationIntent(intent: Intent): Intent? =
