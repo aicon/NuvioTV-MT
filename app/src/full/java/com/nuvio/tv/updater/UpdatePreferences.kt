@@ -10,7 +10,6 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.nuvio.tv.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -58,9 +57,9 @@ class UpdatePreferences @Inject constructor(
         prefs[updateBannerEnabledKey] ?: true
     }
 
-    val updateChannel: Flow<UpdateChannel> = dataStore.data.map { prefs ->
-        UpdateChannel.fromStoredValue(prefs[updateChannelKey])
-            ?: UpdateChannel.defaultForVersion(BuildConfig.VERSION_NAME)
+    // Nuvio-MT ships Stable-only; ignore any previously stored beta channel.
+    val updateChannel: Flow<UpdateChannel> = dataStore.data.map {
+        UpdateChannel.STABLE
     }
 
     val autoInstallEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
@@ -111,14 +110,10 @@ class UpdatePreferences @Inject constructor(
     }
 
     suspend fun getOrInitializeUpdateChannel(): UpdateChannel {
-        val defaultChannel = UpdateChannel.defaultForVersion(BuildConfig.VERSION_NAME)
-        var resolvedChannel = defaultChannel
         dataStore.edit { prefs ->
-            resolvedChannel = UpdateChannel.fromStoredValue(prefs[updateChannelKey])
-                ?: defaultChannel
-            prefs[updateChannelKey] = resolvedChannel.storedValue
+            prefs[updateChannelKey] = UpdateChannel.STABLE.storedValue
         }
-        return resolvedChannel
+        return UpdateChannel.STABLE
     }
 
     suspend fun setIgnoredTag(tag: String?) {
@@ -202,8 +197,10 @@ class UpdatePreferences @Inject constructor(
     }
 
     suspend fun setUpdateChannel(channel: UpdateChannel) {
+        // Channel UI is removed; keep Stable even if something still calls this.
+        if (channel != UpdateChannel.STABLE) return
         dataStore.edit { prefs ->
-            prefs[updateChannelKey] = channel.storedValue
+            prefs[updateChannelKey] = UpdateChannel.STABLE.storedValue
             prefs.remove(ignoredTagKey)
         }
     }

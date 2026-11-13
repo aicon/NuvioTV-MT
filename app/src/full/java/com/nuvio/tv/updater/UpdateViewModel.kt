@@ -222,14 +222,16 @@ class UpdateViewModel @Inject constructor(
     }
 
     fun setUpdateChannel(channel: UpdateChannel) {
+        // Stable-only product builds; ignore any leftover beta requests.
+        if (channel != UpdateChannel.STABLE) return
         val state = _uiState.value
-        if (state.updateChannel == channel) return
+        if (state.updateChannel == UpdateChannel.STABLE) return
 
         updateCheckJob?.cancel()
         UpdateJobService.cancelIdleInstall(context)
         _uiState.update {
             it.copy(
-                updateChannel = channel,
+                updateChannel = UpdateChannel.STABLE,
                 isChecking = false,
                 update = null,
                 isUpdateAvailable = false,
@@ -244,7 +246,7 @@ class UpdateViewModel @Inject constructor(
         }
         viewModelScope.launch {
             downloadStore.clear()
-            updatePreferences.setUpdateChannel(channel)
+            updatePreferences.setUpdateChannel(UpdateChannel.STABLE)
             if (!BuildConfig.IS_DEBUG_BUILD) {
                 checkForUpdates(force = true, showNoUpdateFeedback = false)
             }
