@@ -159,9 +159,9 @@ jobs:
           PY
           keytool -list -keystore "${keystore_path}" -storepass "${RELEASE_STORE_PASSWORD}" >/dev/null
 
-      - name: Build every ABI
+      - name: Build armeabi-v7a only
         if: steps.version.outputs.exists != 'true'
-        run: ./gradlew :app:assembleFullRelease --stacktrace
+        run: ./gradlew :app:assembleFullRelease -PonlyAbis=armeabi-v7a --stacktrace
 
       - name: Rename APKs for release
         if: steps.version.outputs.exists != 'true'
@@ -170,14 +170,16 @@ jobs:
         run: |
           set -eu
           outdir="app/build/outputs/apk/full/release"
-          mapfile -t apks < <(find "${outdir}" -maxdepth 1 -type f -name '*.apk' -print | sort)
+          mapfile -t apks < <(find "${outdir}" -maxdepth 1 -type f -name '*armeabi-v7a*.apk' -print | sort)
           if (( ${#apks[@]} == 0 )); then
-            echo "No release APKs were produced." >&2
+            echo "No armeabi-v7a release APK was produced." >&2
+            find "${outdir}" -maxdepth 1 -type f -name '*.apk' -print >&2 || true
             exit 1
           fi
+          # Drop any non-v7a artifacts left in the output dir.
+          find "${outdir}" -maxdepth 1 -type f -name '*.apk' ! -name '*armeabi-v7a*' -delete
           for apk in "${apks[@]}"; do
             base="$(basename "${apk}")"
-            # app-full-arm64-v8a-release.apk -> NuvioTV-MT-{version}-full-arm64-v8a-release.apk
             rest="${base#app-}"
             dest="${outdir}/NuvioTV-MT-${RELEASE_VERSION}-${rest}"
             mv "${apk}" "${dest}"
@@ -190,53 +192,28 @@ jobs:
           RELEASE_VERSION: ${{ steps.version.outputs.version }}
           RELEASE_CODE: ${{ steps.version.outputs.code }}
           RELEASE_TITLE: ${{ steps.version.outputs.title }}
-          RELEASE_PRERELEASE: ${{ steps.version.outputs.prerelease }}
         run: |
           set -eu
-          channel="Stable"
-          if [[ "${RELEASE_PRERELEASE}" == "true" ]]; then
-            channel="Beta"
-          fi
+          subject="$(git log -1 --format='%s')"
+          body="$(git log -1 --format='%b' | sed '/^$/d' | head -n 8)"
+          sha="$(git rev-parse --short HEAD)"
           {
-            if [[ "${RELEASE_PRERELEASE}" == "true" ]]; then
-              printf '%s\n' \
-                '> [!IMPORTANT]' \
-                '> **Beta builds are for testing and may contain bugs or regressions.** For the regular install, use the Stable channel.' \
-                ''
-            fi
             echo "# ${RELEASE_TITLE}"
             echo
-            echo "Signed NuvioTV-MT ${channel} build \`${RELEASE_VERSION}\` (versionCode \`${RELEASE_CODE}\`)."
-            echo "This is a personal product fork of NuvioTV. It is not an official Nuvio build."
+            echo "\`com.aicon.nuviotv\` · versionCode \`${RELEASE_CODE}\` · **armeabi-v7a only** (test build)."
+            echo
+            echo "## Changes"
+            echo
+            echo "- ${subject} (\`${sha}\`)"
+            if [[ -n "${body}" ]]; then
+              echo
+              printf '%s\n' "${body}"
+            fi
             echo
             echo "## Install"
             echo
-            echo "- Package: \`com.aicon.nuviotv\`"
-            echo "- Launcher name: **Nuvio-MT**"
-            echo "- The package id is different from official NuvioTV (\`com.nuvio.tv\`), so this APK installs beside it and does not replace it."
-            echo "- APK names: \`NuvioTV-MT-${RELEASE_VERSION}-full-<abi>-release.apk\` (plus universal)."
-            echo "- Pick the APK that matches the device CPU. A universal APK is included for the other cases."
-            echo "- \`armeabi-v7a\` for 32-bit Android TV"
-            echo "- \`arm64-v8a\` for 64-bit phones and newer TVs"
-            echo "- \`x86\` and \`x86_64\` for emulators"
-            echo "- In-app updates read public releases from \`aicon/NuvioTV-MT\` (\`releases/latest\` on \`main\`)."
-            echo
-            echo "## What this fork adds"
-            echo
-            echo "- **MediaTrail playback.** While something is playing, the app sends \`start\`, \`pause\`, \`progress\`, and \`stop\` to installed addons that declare the Stremio \`player\` resource. Install the [MediaTrail](https://github.com/aicon/MediaTrail) addon (\`…/nuvio/<token>/manifest.json\`); each install sends a stable \`deviceId\` and a model-based \`deviceName\` so multiple TVs and the phone stay separate on Now Watching. Seek emits progress. Finished watches save at 90%. Progress is sent about every 30 seconds and not while paused. The switch is on by default under playback settings."
-            echo "- **MediaTrail library mark (optional).** Manual mark watched / unwatched also POSTs to \`/nuvio/watched.json\` with \`Authorization: Bearer\` (token never in the URL). Failures never undo the local Nuvio mark."
-            echo "- **Home catalog refresh.** Returning to Home force-refreshes catalog rows and bypasses the addon HTTP disk cache."
-            echo "- **Player engine.** The default engine is Auto. Movies and ordinary TV use ExoPlayer. Anime (Kitsu, MAL, AniList, or an anime genre) uses libmpv. AVI and XviD use libmpv even when the saved engine is ExoPlayer, unless an engine was chosen for that playback. HDR and Dolby Vision stay on ExoPlayer."
-            echo "- **Own update channel.** The built-in updater looks at this repository, not upstream NuvioTV."
-            echo "- **Support.** The in-app support button and QR code open [Ko-fi](https://ko-fi.com/aiconwg)."
-            echo "- **MediaTrail name.** The playback-events setting now says MediaTrail instead of Yamtrack."
-            echo "- **Community lists.** The supporters, sponsors, and contributors lists stay hidden until this fork has its own list. The Ko-fi button and QR code stay."
-            echo
-            echo "The fork does not pause or resume the television from the MediaTrail page. Playback events go out to the addon. They do not come back as remote controls."
-            echo
-            echo "## Commits in this build"
-            echo
-            git log --no-merges --format='- %s' -n 25 HEAD
+            echo "- APK: \`NuvioTV-MT-${RELEASE_VERSION}-full-armeabi-v7a-release.apk\`"
+            echo "- 32-bit Android TV / devices only while testing; other ABIs are not published in this release."
             echo
           } > release-notes.md
 

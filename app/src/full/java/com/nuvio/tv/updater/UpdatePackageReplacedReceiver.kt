@@ -50,9 +50,10 @@ class UpdatePackageReplacedReceiver : BroadcastReceiver() {
                 "pending=${pending?.tag}/${pending?.versionCode} source=${pending?.source}"
         )
         if (pending == null) {
-            // Older builds (e.g. 1.1.16) did not record install source before handing off to the
-            // system installer. Do not guess MANUAL and surprise-launch; only arm the next-open banner.
-            recordLegacyUpgradeReady(prefs)
+            // Older updaters left no marker. Do not surprise-launch or show a success banner.
+            prefs.setAwaitForegroundConfirm(false)
+            prefs.setUpdateReadyNoticeTag(null)
+            Log.i(TAG, "No pending install marker; leaving silent (no relaunch, no banner)")
             return
         }
 
@@ -65,7 +66,7 @@ class UpdatePackageReplacedReceiver : BroadcastReceiver() {
         prefs.clearPendingInstall()
         when (pending.source) {
             PendingUpdateInstall.Source.IDLE -> {
-                // Never surprise-launch after idle auto-install; banner on next open only.
+                // Never surprise-launch after idle auto-install; optional notice on next open.
                 prefs.setAutoInstalledTag(pending.tag)
                 Log.i(TAG, "Idle update ${pending.tag} recorded for next-launch notice")
             }
@@ -73,22 +74,6 @@ class UpdatePackageReplacedReceiver : BroadcastReceiver() {
                 UpdatePostInstallContinuation.onManualUpdateInstalled(context, pending.tag)
             }
         }
-    }
-
-    /**
-     * First upgrade onto a build that understands post-install continuation, from an older updater
-     * that left no pending marker. Prefer the downloaded release tag when it matches this install.
-     */
-    private suspend fun recordLegacyUpgradeReady(prefs: UpdatePreferences) {
-        val downloadedTag = prefs.downloadedUpdate.first()?.first
-        val tag = when {
-            !downloadedTag.isNullOrBlank() &&
-                UpdateApkVersion.matchesInstalled(downloadedTag, pendingVersionCode = null) -> downloadedTag
-            else -> BuildConfig.VERSION_NAME
-        }
-        prefs.setUpdateReadyNoticeTag(tag)
-        prefs.setAwaitForegroundConfirm(false)
-        Log.i(TAG, "No pending install marker; stored next-launch update-ready notice for $tag")
     }
 
     companion object {

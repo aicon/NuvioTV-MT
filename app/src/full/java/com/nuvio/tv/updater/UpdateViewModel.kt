@@ -265,13 +265,35 @@ class UpdateViewModel @Inject constructor(
                 )
             }
 
+            val knownTotal = update.assetSizeBytes
+            var lastPostedProgress = -1f
+            var lastPostedAtMs = 0L
             val result = withContext(Dispatchers.IO) {
                 downloadStore.download(update) { downloaded, total ->
-                    val progress = if (total != null && total > 0) {
-                        (downloaded.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+                    val denom = when {
+                        total != null && total > 0 -> total
+                        knownTotal != null && knownTotal > 0 -> knownTotal
+                        else -> null
+                    }
+                    val progress = if (denom != null) {
+                        (downloaded.toFloat() / denom.toFloat()).coerceIn(0f, 1f)
                     } else {
                         null
                     }
+                    if (progress == null) {
+                        if (_uiState.value.downloadProgress != null) {
+                            _uiState.update { it.copy(downloadProgress = null) }
+                        }
+                        return@download
+                    }
+                    val now = System.currentTimeMillis()
+                    val stepped = progress >= 0.999f ||
+                        lastPostedProgress < 0f ||
+                        progress - lastPostedProgress >= 0.01f ||
+                        now - lastPostedAtMs >= 200L
+                    if (!stepped) return@download
+                    lastPostedProgress = progress
+                    lastPostedAtMs = now
                     _uiState.update { it.copy(downloadProgress = progress) }
                 }
             }
@@ -363,7 +385,8 @@ class UpdateViewModel @Inject constructor(
             updatePreferences.clearPendingInstall()
             when (pending.source) {
                 PendingUpdateInstall.Source.IDLE -> updatePreferences.setAutoInstalledTag(pending.tag)
-                PendingUpdateInstall.Source.MANUAL -> updatePreferences.setUpdateReadyNoticeTag(pending.tag)
+                // Manual: no post-open success banner.
+                PendingUpdateInstall.Source.MANUAL -> updatePreferences.setUpdateReadyNoticeTag(null)
             }
             return
         }
@@ -372,20 +395,10 @@ class UpdateViewModel @Inject constructor(
     }
 
     private suspend fun consumeUpdateReadyNotice() {
-        val tag = updatePreferences.updateReadyNoticeTag.first() ?: return
-        updatePreferences.setUpdateReadyNoticeTag(null)
-        if (VersionUtils.isRemoteNewer(tag, BuildConfig.VERSION_NAME)) return
-        if (VersionUtils.isRemoteNewer(BuildConfig.VERSION_NAME, tag)) return
-        val installed = AppUpdate(
-            tag = tag,
-            title = tag,
-            notes = "",
-            releaseUrl = null,
-            assetName = "",
-            assetUrl = "",
-            assetSizeBytes = null
-        )
-        _uiState.update { it.copy(installedUpdate = installed, showBanner = true) }
+        // Clear leftover tags from older builds; do not show a "updated" banner.
+        if (updatePreferences.updateReadyNoticeTag.first() != null) {
+            updatePreferences.setUpdateReadyNoticeTag(null)
+        }
     }
 
     // Shows the "updated" banner once after the idle job installed a release, then forgets it.

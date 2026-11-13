@@ -15,6 +15,7 @@ class ApkDownloader @Inject constructor(
     suspend fun download(
         url: String,
         destinationFile: File,
+        knownTotalBytes: Long? = null,
         onProgress: (downloadedBytes: Long, totalBytes: Long?) -> Unit
     ): Result<File> {
         return runCatching {
@@ -23,6 +24,8 @@ class ApkDownloader @Inject constructor(
 
             val request = Request.Builder()
                 .url(url)
+                // Prefer identity so Content-Length survives OkHttp's gzip decode path.
+                .header("Accept-Encoding", "identity")
                 .build()
 
             okHttpClient.newCall(request).execute().use { response ->
@@ -32,6 +35,7 @@ class ApkDownloader @Inject constructor(
 
                 val body = response.body ?: error("Empty download body")
                 val total = body.contentLength().takeIf { it > 0 }
+                    ?: knownTotalBytes?.takeIf { it > 0 }
 
                 body.byteStream().use { input ->
                     FileOutputStream(destinationFile).use { output ->
