@@ -4,7 +4,7 @@
 
 ---
 
-**An enhanced, independent Android TV client fork of [NuvioTV](https://github.com/NuvioMedia/NuvioTV) featuring native MediaTrail scrobbling, intelligent player engine switching, standalone coexistence, and dedicated in-app updates.**
+**An enhanced, independent Android TV client fork of [NuvioTV](https://github.com/NuvioMedia/NuvioTV) featuring MediaTrail Now Watching reporting, intelligent player engine switching, standalone coexistence, and dedicated in-app updates.**
 
 [![Release](https://img.shields.io/badge/release-latest-blue.svg)](https://github.com/aicon/NuvioTV-MT/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL_v3-green.svg)](LICENSE)
@@ -29,7 +29,9 @@ NuvioTV-MT is an independent community build of NuvioTV tailored specifically fo
 
 ### 2. MediaTrail Playback Events
 - Dispatches playback events (`start`, `pause`, `progress`, `stop`) to installed addons that declare the `player` resource.
-- Works seamlessly with **[MediaTrail-Scrobbler](https://github.com/aicon/MediaTrail-Scrobbler)** to drive the real-time **Now Watching** dashboard banner and record watch history once the threshold is reached.
+- Install the **[MediaTrail](https://github.com/aicon/MediaTrail)** addon address (`…/nuvio/manifest.json`) under Settings → Addons. No separate scrobbler container.
+- Every install sends a stable `deviceId` plus an automatic label such as `TV · Shield`, so multiple TVs and the phone each get their own Now Watching strip (renameable on the MediaTrail home page).
+- Seek also emits `progress`. Finished watches are saved in MediaTrail at **90%**.
 - Sends progress pings every 30 seconds during active playback (paused playback stops pings).
 - Video rendering and decoding remain local on your TV; only playback event metadata is dispatched.
 - Enabled by default under **Playback Settings** (can be toggled at any time).

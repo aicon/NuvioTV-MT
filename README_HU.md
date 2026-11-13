@@ -4,7 +4,7 @@
 
 ---
 
-**Önálló Android TV kliens, a [NuvioTV](https://github.com/NuvioMedia/NuvioTV) kiegészített forkja beépített MediaTrail scrobbler-támogatással, intelligens lejátszómotor-választással, független telepíthetőséggel és saját alkalmazáson belüli frissítővel.**
+**Önálló Android TV kliens, a [NuvioTV](https://github.com/NuvioMedia/NuvioTV) kiegészített forkja MediaTrail „Most nézem” jelentéssel, intelligens lejátszómotor-választással, független telepíthetőséggel és saját alkalmazáson belüli frissítővel.**
 
 [![Verzió](https://img.shields.io/badge/verzió-legfrissebb-blue.svg)](https://github.com/aicon/NuvioTV-MT/releases)
 [![Licenc: GPL v3](https://img.shields.io/badge/Licenc-GPL_v3-green.svg)](LICENSE)
@@ -29,7 +29,9 @@ A NuvioTV-MT a NuvioTV független, közösségi kiadása kifejezetten Android TV
 
 ### 2. MediaTrail lejátszás-szinkronizáció
 - Lejátszás közben valós időben továbbítja a lejátszó eseményeit (`start`, `pause`, `progress`, `stop`) a `player` erőforrást hirdető addonoknak.
-- Teljes összhangban működik a **[MediaTrail-Scrobblerrel](https://github.com/aicon/MediaTrail-Scrobbler)**: kezeli a kezdőlapi **„Most nézem”** sávot, a megtekintési küszöb (alapból 80%) elérésekor pedig bejegyzi az előzményt.
+- A **[MediaTrail](https://github.com/aicon/MediaTrail)** addon címét (`…/nuvio/manifest.json`) add hozzá a Beállítások → Bővítmények alatt. Külön scrobbler konténer nem kell.
+- Minden telepítés stabil `deviceId`-t és automatikus nevet küld (pl. `TV · Shield`), így több tévé és a telefon a kezdőlapon külön „Most nézem” sávot kap (átnevezhető).
+- Seek után is megy `progress`. A befejezett nézés a MediaTrailben **90%-nál** mentődik.
 - Aktív lejátszás alatt 30 másodpercenként küld állapotjelzést (szüneteltetés alatt nem terhel).
 - A videó lejátszása és dekódolása helyben történik a tévén; a MediaTrail csak az állapotinformációkat kapja meg.
 - A funkció a **Lejátszási beállításokban** tetszés szerint ki- és bekapcsolható (alapértelmezetten aktív).

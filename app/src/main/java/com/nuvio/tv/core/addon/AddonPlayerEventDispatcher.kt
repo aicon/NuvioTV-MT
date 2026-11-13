@@ -21,7 +21,7 @@ import javax.inject.Singleton
 
 /**
  * Fire-and-forget Stremio-style player events to installed addons that declare
- * the `player` resource (see NuvioTV #4320 / MediaTrail scrobbler).
+ * the `player` resource (see NuvioTV #4320 / MediaTrail Now Watching addon).
  *
  * Failures never propagate to callers — playback must stay unaffected.
  */
