@@ -25,7 +25,7 @@ This fork exists so the Android TV client works as tightly as possible with **[M
 ### 1. Side-by-Side Coexistence
 - **Package Identifier:** `com.aicon.nuviotv`.
 - Installs completely independently alongside the official NuvioTV app (`com.nuvio.tv`) without overwriting it.
-- **Launcher name:** **Nuvio YT** (default), **Nuvio** (Hungarian)
+- **Launcher name:** **Nuvio-MT**
 
 ### 2. MediaTrail Playback Events
 - Dispatches playback events (`start`, `pause`, `progress`, `stop`) to installed addons that declare the `player` resource.
