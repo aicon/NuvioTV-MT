@@ -163,6 +163,27 @@ jobs:
         if: steps.version.outputs.exists != 'true'
         run: ./gradlew :app:assembleFullRelease --stacktrace
 
+      - name: Rename APKs for release
+        if: steps.version.outputs.exists != 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          outdir="app/build/outputs/apk/full/release"
+          mapfile -t apks < <(find "${outdir}" -maxdepth 1 -type f -name '*.apk' -print | sort)
+          if (( ${#apks[@]} == 0 )); then
+            echo "No release APKs were produced." >&2
+            exit 1
+          fi
+          for apk in "${apks[@]}"; do
+            base="$(basename "${apk}")"
+            # app-full-arm64-v8a-release.apk -> NuvioTV-MT-{version}-full-arm64-v8a-release.apk
+            rest="${base#app-}"
+            dest="${outdir}/NuvioTV-MT-${RELEASE_VERSION}-${rest}"
+            mv "${apk}" "${dest}"
+            echo "Renamed ${base} -> $(basename "${dest}")"
+          done
+
       - name: Write release notes
         if: steps.version.outputs.exists != 'true'
         env:
