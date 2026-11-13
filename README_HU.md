@@ -50,8 +50,7 @@ Az alapértelmezett „Auto” motor intelligensen választja ki a legmegfelelő
 
 ### 4. Saját alkalmazáson belüli frissítő
 Beépített frissítőmodul, amely közvetlenül az `aicon/NuvioTV-MT` GitHub kiadásait figyeli:
-- **Stabil csatorna:** A `main` ág kiadásait követi (előzetes jelölés nélküli stabil verziók).
-- **Béta csatorna:** A `dev` ág kiadásait követi (előzetes és tesztverziók is megjelennek).
+- A legutóbbi stabil kiadást használja (`releases/latest` a `main` ágról).
 - Automatikusan a tévé processzortípusához (ARM64, ARMv7 stb.) illeszkedő APK csomagot tölti le.
 - Az egyszerű frissítéshez azonos csomagnév és azonos aláírókulcs szükséges.
 
@@ -81,9 +80,8 @@ cd NuvioTV-MT
 
 ## 🌿 Ágkezelés és Upstream frissítések
 
-- **`main`:** A hivatalos NuvioTV stabil kiadási címkéit követi.
-- **`dev`:** A hivatalos NuvioTV béta kiadási címkéit követi.
-- A hivatalos verziók beolvasztással (merge) kerülnek át, így a fork saját módosításai és funkciói folyamatosan megmaradnak.
+- **`main`:** az egyetlen ág, amin ez a termékfork dolgozik. Az aláírt stabil kiadások innen jelennek meg.
+- Az upstream címkék a `main`-be olvadnak be (nem reset), így a fork csomagneve, aláírása és a MediaTrail funkciók megmaradnak.
 
 ---
 

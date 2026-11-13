@@ -218,7 +218,7 @@ jobs:
             echo "- \`armeabi-v7a\` for 32-bit Android TV"
             echo "- \`arm64-v8a\` for 64-bit phones and newer TVs"
             echo "- \`x86\` and \`x86_64\` for emulators"
-            echo "- In-app updates read public releases from \`aicon/NuvioTV-MT\` Stable (\`releases/latest\`)."
+            echo "- In-app updates read public releases from \`aicon/NuvioTV-MT\` (\`releases/latest\` on \`main\`)."
             echo
             echo "## What this fork adds"
             echo

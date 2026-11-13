@@ -50,8 +50,7 @@ The default "Auto" engine mode intelligently picks the optimal decoder per media
 
 ### 4. Custom In-App Updater
 Features an integrated updater that tracks releases from `aicon/NuvioTV-MT`:
-- **Stable Channel:** Updates from the `main` branch (stable releases without pre-release tags).
-- **Beta Channel:** Updates from the `dev` branch (evaluates pre-releases and newer builds).
+- Uses the latest stable release (`releases/latest` on `main`).
 - Automatically selects the matching CPU architecture APK (falling back to universal APK if single-file).
 - Requires matching package name and signing keys for seamless in-place updates.
 
@@ -81,9 +80,8 @@ cd NuvioTV-MT
 
 ## 🌿 Branching Model & Upstream Sync
 
-- **`main`:** Tracks upstream NuvioTV stable release tags.
-- **`dev`:** Tracks upstream NuvioTV beta release tags.
-- Upstream tags are cleanly merged into respective branches rather than reset, permanently preserving NuvioTV-MT custom features and branding.
+- **`main`:** the only branch used for this product fork. Signed stable releases are published from here.
+- Upstream tags are merged into `main` (not reset), so fork package id, signing, and MediaTrail features stay.
 
 ---
 
