@@ -212,7 +212,7 @@ jobs:
             echo "## Install"
             echo
             echo "- Package: \`com.aicon.nuviotv\`"
-            echo "- Launcher name: **Nuvio-MT**"
+            echo "- Launcher name: **Nuvio YT** (default), **Nuvio** (Hungarian)"
             echo "- The package id is different from official NuvioTV (\`com.nuvio.tv\`), so this APK installs beside it and does not replace it."
             echo "- APK names: \`NuvioTV-MT-${RELEASE_VERSION}-full-<abi>-release.apk\` (plus universal)."
             echo "- Pick the APK that matches the device CPU. A universal APK is included for the other cases."

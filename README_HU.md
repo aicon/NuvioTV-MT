@@ -25,7 +25,7 @@ Ez a fork azért készült, hogy az Android TV kliens a lehető legszorosabban m
 ### 1. Párhuzamos telepíthetőség
 - **Csomagnév:** `com.aicon.nuviotv`.
 - Teljesen függetlenül telepíthető a hivatalos NuvioTV (`com.nuvio.tv`) mellé, nem írja felül azt.
-- **Indítóikon neve:** **Nuvio-MT** (minden nyelven).
+- **Indítóikon neve:** **Nuvio YT** (alapértelmezett), **Nuvio** (magyar)
 
 ### 2. MediaTrail lejátszás-szinkronizáció
 - Lejátszás közben valós időben továbbítja a lejátszó eseményeit (`start`, `pause`, `progress`, `stop`) a `player` erőforrást hirdető addonoknak.
