@@ -28,7 +28,7 @@ class CatalogRepositoryTypeTest {
             .fromJson("""{"metas":[{"id":"tt1","type":"series","name":"A show"}]}""")!!
         val requestedUrls = mutableListOf<String>()
         val api = mockk<AddonApi>()
-        coEvery { api.getCatalog(capture(requestedUrls)) } returns Response.success(response)
+        coEvery { api.getCatalog(capture(requestedUrls), any(), any()) } returns Response.success(response)
         val preferences = mockk<LayoutPreferenceDataStore> {
             every { customPosterUrlPattern } returns flowOf("")
             every { customPosterEnabledScreens } returns flowOf(emptySet())

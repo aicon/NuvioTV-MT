@@ -37,7 +37,7 @@ class CatalogRepositoryMalformedEntryTest {
             .build()
         val response = moshi.adapter(CatalogResponseDto::class.java).fromJson(payload)!!
         val api = mockk<AddonApi>()
-        coEvery { api.getCatalog(any()) } returns Response.success(response)
+        coEvery { api.getCatalog(any(), any(), any()) } returns Response.success(response)
         val layoutPrefs = mockk<LayoutPreferenceDataStore> {
             every { customPosterUrlPattern } returns flowOf("")
             every { customPosterEnabledScreens } returns flowOf(com.nuvio.tv.core.poster.CustomPosterScreen.ALL)

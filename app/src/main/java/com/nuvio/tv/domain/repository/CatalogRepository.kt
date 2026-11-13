@@ -16,6 +16,7 @@ interface CatalogRepository {
         skipStep: Int = 100,
         extraArgs: Map<String, String> = emptyMap(),
         supportsSkip: Boolean = false,
-        posterScreen: com.nuvio.tv.core.poster.CustomPosterScreen = com.nuvio.tv.core.poster.CustomPosterScreen.HOME
+        posterScreen: com.nuvio.tv.core.poster.CustomPosterScreen = com.nuvio.tv.core.poster.CustomPosterScreen.HOME,
+        forceRefresh: Boolean = false,
     ): Flow<NetworkResult<CatalogRow>>
 }

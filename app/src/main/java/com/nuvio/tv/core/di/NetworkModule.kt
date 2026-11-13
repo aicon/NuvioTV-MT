@@ -38,6 +38,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.Cache
+import okhttp3.CacheControl
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -161,6 +162,26 @@ object NetworkModule {
             .cache(Cache(File(context.cacheDir, "addon_http_cache"), 50L * 1024 * 1024))
             .sslSocketFactory(sslContext.socketFactory, trustAllManager)
             .hostnameVerifier { _, _ -> true }
+            // Catalog force-refresh sends Cache-Control: no-cache; skip disk cache entirely.
+            .addInterceptor { chain ->
+                val request = chain.request()
+                val cacheControl = request.header("Cache-Control").orEmpty().lowercase()
+                val pragma = request.header("Pragma").orEmpty().lowercase()
+                val forceNetwork =
+                    cacheControl.contains("no-cache") ||
+                        cacheControl.contains("no-store") ||
+                        cacheControl.contains("max-age=0") ||
+                        pragma.contains("no-cache")
+                if (forceNetwork) {
+                    chain.proceed(
+                        request.newBuilder()
+                            .cacheControl(CacheControl.FORCE_NETWORK)
+                            .build(),
+                    )
+                } else {
+                    chain.proceed(request)
+                }
+            }
             .build()
     }
 

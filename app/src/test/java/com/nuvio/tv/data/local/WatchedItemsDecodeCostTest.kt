@@ -67,7 +67,7 @@ class WatchedItemsDecodeCostTest {
         every { factory.get(any(), any()) } returns store
         val profileManager = mockk<ProfileManager>()
         every { profileManager.activeProfileId } returns MutableStateFlow(PROFILE_ID)
-        val preferences = WatchedItemsPreferences(factory, profileManager)
+        val preferences = WatchedItemsPreferences(factory, profileManager, mockk(relaxed = true))
 
         preferences.markAsWatchedBatch((0 until HISTORY_SIZE).map(::item), PROFILE_ID)
         // The app has been running, so the history was decoded before playback reached the threshold.

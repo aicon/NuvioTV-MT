@@ -45,7 +45,8 @@ class CatalogRepositoryImpl @Inject constructor(
         skipStep: Int,
         extraArgs: Map<String, String>,
         supportsSkip: Boolean,
-        posterScreen: com.nuvio.tv.core.poster.CustomPosterScreen
+        posterScreen: com.nuvio.tv.core.poster.CustomPosterScreen,
+        forceRefresh: Boolean,
     ): Flow<NetworkResult<CatalogRow>> = flow {
         emit(NetworkResult.Loading)
 
@@ -65,10 +66,12 @@ class CatalogRepositoryImpl @Inject constructor(
         val url = buildCatalogUrl(addonBaseUrl, type, catalogId, skip, extraArgs)
         Log.d(
             TAG,
-            "Fetching catalog addonId=$addonId addonName=$addonName type=$type catalogId=$catalogId skip=$skip skipStep=$skipStep supportsSkip=$supportsSkip url=$url"
+            "Fetching catalog addonId=$addonId addonName=$addonName type=$type catalogId=$catalogId skip=$skip skipStep=$skipStep supportsSkip=$supportsSkip forceRefresh=$forceRefresh url=$url"
         )
 
-        when (val result = safeApiCall(context) { api.getCatalog(url) }) {
+        val cacheControl = if (forceRefresh) "no-cache, no-store, max-age=0" else null
+        val pragma = if (forceRefresh) "no-cache" else null
+        when (val result = safeApiCall(context) { api.getCatalog(url, cacheControl, pragma) }) {
             is NetworkResult.Success -> {
                 val rawItemCount = result.data.metas.size
                 val posterPattern = layoutPreferenceDataStore.customPosterUrlPattern

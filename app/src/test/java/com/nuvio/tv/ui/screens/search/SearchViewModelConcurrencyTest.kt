@@ -183,7 +183,8 @@ class SearchViewModelConcurrencyTest {
             skipStep: Int,
             extraArgs: Map<String, String>,
             supportsSkip: Boolean,
-            posterScreen: com.nuvio.tv.core.poster.CustomPosterScreen
+            posterScreen: com.nuvio.tv.core.poster.CustomPosterScreen,
+            forceRefresh: Boolean
         ): Flow<NetworkResult<CatalogRow>> = flow {
             val query = extraArgs.getValue("search")
             queries += query

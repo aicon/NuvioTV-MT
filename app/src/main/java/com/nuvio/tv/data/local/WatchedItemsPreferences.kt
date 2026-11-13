@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.nuvio.tv.core.addon.MediaTrailWatchedSync
 import com.nuvio.tv.core.profile.ProfileManager
 import com.google.gson.Gson
 import com.nuvio.tv.data.mediaserver.ServerItemRef
@@ -26,7 +27,8 @@ import javax.inject.Singleton
 @Singleton
 class WatchedItemsPreferences @Inject constructor(
     private val factory: ProfileDataStoreFactory,
-    private val profileManager: ProfileManager
+    private val profileManager: ProfileManager,
+    private val mediaTrailWatchedSync: MediaTrailWatchedSync,
 ) {
     companion object {
         private const val FEATURE = "watched_items_preferences"
@@ -155,6 +157,7 @@ class WatchedItemsPreferences @Inject constructor(
             }
             preferences[watchedItemsKey] = filtered.toSet() + gson.toJson(item)
         }
+        mediaTrailWatchedSync.pushMarks(listOf(item), played = true)
     }
 
     suspend fun markAsWatchedBatch(
@@ -170,6 +173,7 @@ class WatchedItemsPreferences @Inject constructor(
             }
             preferences[watchedItemsKey] = filtered.toSet() + items.map { gson.toJson(it) }
         }
+        mediaTrailWatchedSync.pushMarks(items, played = true)
     }
 
     suspend fun unmarkAsWatched(
@@ -179,13 +183,22 @@ class WatchedItemsPreferences @Inject constructor(
         profileId: Int = profileManager.activeProfileId.value
     ) {
         val removeKey = buildWatchedKey(contentId, season, episode)
+        var removedType: String? = null
         store(profileId).edit { preferences ->
             val current = preferences[watchedItemsKey] ?: emptySet()
+            current.firstOrNull { json -> extractWatchedItemKey(json) == removeKey }
+                ?.let { json -> removedType = runCatching { gson.fromJson(json, WatchedItem::class.java).contentType }.getOrNull() }
             val filtered = current.filterNot { json ->
                 extractWatchedItemKey(json) == removeKey
             }
             preferences[watchedItemsKey] = filtered.toSet()
         }
+        mediaTrailWatchedSync.pushUnmark(
+            contentId = contentId,
+            contentType = removedType,
+            season = season,
+            episode = episode,
+        )
     }
 
     suspend fun unmarkAsWatchedBatch(
@@ -195,13 +208,29 @@ class WatchedItemsPreferences @Inject constructor(
     ) {
         if (episodes.isEmpty()) return
         val removeKeys = episodes.map { (s, e) -> buildWatchedKey(contentId, s, e) }.toSet()
+        var contentType: String? = null
         store(profileId).edit { preferences ->
             val current = preferences[watchedItemsKey] ?: emptySet()
+            current.firstOrNull { json -> extractWatchedItemKey(json) in removeKeys }
+                ?.let { json -> contentType = runCatching { gson.fromJson(json, WatchedItem::class.java).contentType }.getOrNull() }
             val filtered = current.filterNot { json ->
                 extractWatchedItemKey(json) in removeKeys
             }
             preferences[watchedItemsKey] = filtered.toSet()
         }
+        mediaTrailWatchedSync.pushMarks(
+            items = episodes.map { (season, episode) ->
+                WatchedItem(
+                    contentId = contentId,
+                    contentType = contentType ?: "series",
+                    title = "",
+                    season = season,
+                    episode = episode,
+                    watchedAt = 0L,
+                )
+            },
+            played = false,
+        )
     }
 
     suspend fun getAllItems(profileId: Int = profileManager.activeProfileId.value): List<WatchedItem> {

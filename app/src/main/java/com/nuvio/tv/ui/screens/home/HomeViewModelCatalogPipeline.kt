@@ -412,7 +412,8 @@ internal fun HomeViewModel.loadCatalogPipeline(
     /** True only for the ON_RESUME refresh, where a row already on screen must be merged into. */
     isRefresh: Boolean = false,
     requestedByUser: Boolean = false,
-    forceReplace: Boolean = false
+    forceReplace: Boolean = false,
+    forceRefresh: Boolean = false,
 ) {
     val loadJob = viewModelScope.launch {
         var hasCountedCompletion = false
@@ -422,7 +423,7 @@ internal fun HomeViewModel.loadCatalogPipeline(
             val skipStep = catalog.skipStep()
             Log.d(
                 HomeViewModel.TAG,
-                "Loading home catalog addonId=${addon.id} addonName=${addon.name} type=${catalog.apiType} catalogId=${catalog.id} catalogName=${catalog.name} supportsSkip=$supportsSkip skipStep=$skipStep"
+                "Loading home catalog addonId=${addon.id} addonName=${addon.name} type=${catalog.apiType} catalogId=${catalog.id} catalogName=${catalog.name} supportsSkip=$supportsSkip skipStep=$skipStep forceRefresh=$forceRefresh"
             )
             catalogRepository.getCatalog(
                 addonBaseUrl = addon.baseUrl,
@@ -433,7 +434,8 @@ internal fun HomeViewModel.loadCatalogPipeline(
                 type = catalog.apiType,
                 skip = 0,
                 skipStep = skipStep,
-                supportsSkip = supportsSkip
+                supportsSkip = supportsSkip,
+                forceRefresh = forceRefresh,
             ).collect { result ->
                 if (generation != catalogLoadGeneration) return@collect
                 when (result) {
@@ -1173,7 +1175,11 @@ internal fun HomeViewModel.mergeRefreshedCatalogRow(
 }
 
 
-internal fun HomeViewModel.refreshVisibleCatalogsPipeline(requestedByUser: Boolean = false, forceReplace: Boolean = false) {
+internal fun HomeViewModel.refreshVisibleCatalogsPipeline(
+    requestedByUser: Boolean = false,
+    forceReplace: Boolean = false,
+    forceRefresh: Boolean = false,
+) {
     val loadedKeys = synchronized(catalogStateLock) { catalogsMap.keys.toSet() }
     if (loadedKeys.isEmpty()) return
 
@@ -1190,10 +1196,21 @@ internal fun HomeViewModel.refreshVisibleCatalogsPipeline(requestedByUser: Boole
     }
     if (toRefresh.isEmpty()) return
 
-    Log.d(HomeViewModel.TAG, "Refreshing ${toRefresh.size} home catalogs in place")
+    Log.d(
+        HomeViewModel.TAG,
+        "Refreshing ${toRefresh.size} home catalogs in place requestedByUser=$requestedByUser forceRefresh=$forceRefresh",
+    )
     val generation = catalogLoadGeneration
     pendingCatalogLoads += toRefresh.size
     toRefresh.forEach { (addon, catalog) ->
-        loadCatalogPipeline(addon, catalog, generation, isRefresh = true, requestedByUser = requestedByUser, forceReplace = forceReplace)
+        loadCatalogPipeline(
+            addon,
+            catalog,
+            generation,
+            isRefresh = true,
+            requestedByUser = requestedByUser,
+            forceReplace = forceReplace,
+            forceRefresh = forceRefresh,
+        )
     }
 }

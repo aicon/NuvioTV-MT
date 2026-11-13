@@ -105,8 +105,6 @@ class HomeViewModel @Inject constructor(
         private const val MAX_NEXT_UP_CONCURRENCY = 4
         private const val MAX_CATALOG_LOAD_CONCURRENCY = 3
 
-        /** How long a home catalog is left alone before a return to Home re-requests it. */
-        private const val HOME_CATALOG_REFRESH_TTL_MS = 15L * 60L * 1000L
         internal const val EXTERNAL_META_PREFETCH_FOCUS_DEBOUNCE_MS = 220L
         internal const val EXTERNAL_META_PREFETCH_ADJACENT_DEBOUNCE_MS = 120L
         private const val MAX_ENRICHMENT_CACHE_SIZE = 64
@@ -840,32 +838,28 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Called when Home comes back to the foreground, whether from another screen or from
-     * outside the app.  Re-requests page 1 of the catalogs already loaded when the last
-     * refresh is older than [HOME_CATALOG_REFRESH_TTL_MS], at most once per interval, and
-     * merges each result into the row that is already on screen.
-     */
-    /**
      * The user pressed refresh in addon settings. Home is still on the back stack, so its
-     * catalogs are re-requested right away rather than waiting for the interval or for the
-     * user to come back. The same merge rules apply, so a row is never rebuilt under focus.
+     * catalogs are re-requested right away with HTTP cache bypass. The same merge rules apply,
+     * so a row is never rebuilt under focus.
      */
     private fun observeManualAddonRefresh() {
         viewModelScope.launch {
             startupSyncService.manualAddonRefreshes.collect {
                 if (addonsCache.isEmpty()) return@collect
                 lastHomeCatalogRefreshAtMs = android.os.SystemClock.elapsedRealtime()
-                refreshVisibleCatalogsPipeline(requestedByUser = true)
+                refreshVisibleCatalogsPipeline(requestedByUser = true, forceRefresh = true)
             }
         }
     }
 
+    /**
+     * Home resumed or regained focus: always re-fetch catalogs and bypass HTTP cache
+     * (same intent as mobile Home tab force refresh).
+     */
     fun refreshHomeCatalogsIfStale() {
         if (addonsCache.isEmpty()) return
-        val now = android.os.SystemClock.elapsedRealtime()
-        if (now - lastHomeCatalogRefreshAtMs < HOME_CATALOG_REFRESH_TTL_MS) return
-        lastHomeCatalogRefreshAtMs = now
-        refreshVisibleCatalogsPipeline()
+        lastHomeCatalogRefreshAtMs = android.os.SystemClock.elapsedRealtime()
+        refreshVisibleCatalogsPipeline(requestedByUser = true, forceRefresh = true)
     }
 
     private suspend fun loadAllCatalogs(addons: List<Addon>, forceReload: Boolean = false) =

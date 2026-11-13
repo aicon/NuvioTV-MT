@@ -213,15 +213,18 @@ jobs:
             echo
             echo "- Package: \`com.aicon.nuviotv\`"
             echo "- The package id is different from official NuvioTV (\`com.nuvio.tv\`), so this APK installs beside it and does not replace it."
+            echo "- APK names: \`NuvioTV-MT-${RELEASE_VERSION}-full-<abi>-release.apk\` (plus universal)."
             echo "- Pick the APK that matches the device CPU. A universal APK is included for the other cases."
             echo "- \`armeabi-v7a\` for 32-bit Android TV"
             echo "- \`arm64-v8a\` for 64-bit phones and newer TVs"
             echo "- \`x86\` and \`x86_64\` for emulators"
-            echo "- In-app updates read public releases from \`aicon/NuvioTV-MT\`. Stable builds come from \`main\`. Beta builds come from \`dev\`."
+            echo "- In-app updates read public releases from \`aicon/NuvioTV-MT\` Stable (\`releases/latest\`)."
             echo
             echo "## What this fork adds"
             echo
-            echo "- **MediaTrail playback.** While something is playing, the app sends \`start\`, \`pause\`, \`progress\`, and \`stop\` to installed addons that declare the Stremio \`player\` resource. Install the [MediaTrail](https://github.com/aicon/MediaTrail) addon (\`…/nuvio/manifest.json\`); each install sends a stable \`deviceId\` and a model-based \`deviceName\` so multiple TVs and the phone stay separate on Now Watching. Seek emits progress. Finished watches save at 90%. Progress is sent about every 30 seconds and not while paused. The switch is on by default under playback settings."
+            echo "- **MediaTrail playback.** While something is playing, the app sends \`start\`, \`pause\`, \`progress\`, and \`stop\` to installed addons that declare the Stremio \`player\` resource. Install the [MediaTrail](https://github.com/aicon/MediaTrail) addon (\`…/nuvio/<token>/manifest.json\`); each install sends a stable \`deviceId\` and a model-based \`deviceName\` so multiple TVs and the phone stay separate on Now Watching. Seek emits progress. Finished watches save at 90%. Progress is sent about every 30 seconds and not while paused. The switch is on by default under playback settings."
+            echo "- **MediaTrail library mark (optional).** Manual mark watched / unwatched also POSTs to \`/nuvio/watched.json\` with \`Authorization: Bearer\` (token never in the URL). Failures never undo the local Nuvio mark."
+            echo "- **Home catalog refresh.** Returning to Home force-refreshes catalog rows and bypasses the addon HTTP disk cache."
             echo "- **Player engine.** The default engine is Auto. Movies and ordinary TV use ExoPlayer. Anime (Kitsu, MAL, AniList, or an anime genre) uses libmpv. AVI and XviD use libmpv even when the saved engine is ExoPlayer, unless an engine was chosen for that playback. HDR and Dolby Vision stay on ExoPlayer."
             echo "- **Own update channel.** The built-in updater looks at this repository, not upstream NuvioTV."
             echo "- **Support.** The in-app support button and QR code open [Ko-fi](https://ko-fi.com/aiconwg)."

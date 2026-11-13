@@ -155,7 +155,7 @@ class WatchedItemsPreferencesSyncTest {
         every { factory.get(any(), any()) } returns store
         val profileManager = mockk<ProfileManager>()
         every { profileManager.activeProfileId } returns MutableStateFlow(1)
-        val preferences = WatchedItemsPreferences(factory, profileManager)
+        val preferences = WatchedItemsPreferences(factory, profileManager, mockk(relaxed = true))
         val valid = item("valid", 100L)
         preferences.markAsWatched(valid, 1)
         store.edit { prefs ->
@@ -181,7 +181,7 @@ class WatchedItemsPreferencesSyncTest {
         val profileManager = mockk<ProfileManager>()
         every { profileManager.activeProfileId } returns activeProfile
         return Harness(
-            preferences = WatchedItemsPreferences(factory, profileManager),
+            preferences = WatchedItemsPreferences(factory, profileManager, mockk(relaxed = true)),
             activeProfile = activeProfile
         )
     }
