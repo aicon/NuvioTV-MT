@@ -318,12 +318,12 @@ class UpdateViewModel @Inject constructor(
 
         _uiState.update { it.copy(showUnknownSourcesDialog = false) }
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { ApkInstaller.install(context, apkFile, background = false) }
-                .onFailure {
-                    Log.w(TAG, "Session install failed, falling back to the system installer", it)
-                    runCatching { ApkInstaller.launchSystemInstaller(context, apkFile) }
-                        .onFailure { error -> Log.w(TAG, "System installer failed", error) }
-                }
+            // User-started installs must use the system package-installer screen (ACTION_VIEW),
+            // same as the phone updater. PackageInstaller sessions that then fire
+            // STATUS_PENDING_USER_ACTION drop many Android TV launchers to the home screen
+            // while the app is replaced, with no visible install UI.
+            runCatching { ApkInstaller.launchSystemInstaller(context, apkFile) }
+                .onFailure { error -> Log.w(TAG, "System installer failed", error) }
         }
     }
 

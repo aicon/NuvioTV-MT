@@ -37,6 +37,9 @@ object ApkInstaller {
      * metadata so the new version is compiled at install time. A [background] install asks the system to skip the
      * confirmation screen, which Android 12+ allows for an app updating itself; elsewhere the system still asks.
      * The outcome arrives in [UpdateInstallResultReceiver].
+     *
+     * Prefer [launchSystemInstaller] for installs the user starts from the banner: session + confirm Intent is
+     * unreliable on Android TV (home screen, no install UI). Keep this path for silent/idle auto-install jobs.
      */
     fun install(
         context: Context,

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import java.io.File
@@ -15,6 +16,9 @@ private const val TAG = "UpdateInstall"
  * Receives the outcome of an update install session. A confirmation request is shown only for installs the user
  * started; a background install that still needs confirmation is dropped and the downloaded APK waits for the banner.
  * A failed session is retried without dex metadata, then falls back to the system installer screen.
+ *
+ * On Android TV (leanback), the PackageInstaller confirmation Intent often fails to show a usable UI and only
+ * leaves the user on the home screen while the package is replaced. Those devices switch to the system installer.
  */
 class UpdateInstallResultReceiver : BroadcastReceiver() {
 
@@ -32,19 +36,37 @@ class UpdateInstallResultReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 if (background) {
                     runCatching { context.packageManager.packageInstaller.abandonSession(sessionId) }
+                } else if (isLeanback(context)) {
+                    Log.i(TAG, "Leanback device: skip session confirm UI, use system installer")
+                    runCatching { context.packageManager.packageInstaller.abandonSession(sessionId) }
+                    if (apkFile != null && apkFile.exists()) {
+                        runCatching { ApkInstaller.launchSystemInstaller(context, apkFile) }
+                            .onFailure { Log.w(TAG, "System installer fallback failed", it) }
+                    }
                 } else {
                     confirmationIntent(intent)?.let { confirm ->
-                        runCatching { context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                            .onFailure {
-                                Log.w(TAG, "Install confirmation screen unavailable", it)
-                                runCatching { context.packageManager.packageInstaller.abandonSession(sessionId) }
-                                retryAfterFailure(context, apkFile, background = false, withDexMetadata = false)
-                            }
+                        runCatching {
+                            context.startActivity(
+                                confirm.addFlags(
+                                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                )
+                            )
+                        }.onFailure {
+                            Log.w(TAG, "Install confirmation screen unavailable", it)
+                            runCatching { context.packageManager.packageInstaller.abandonSession(sessionId) }
+                            retryAfterFailure(context, apkFile, background = false, withDexMetadata = false)
+                        }
                     }
                 }
             }
             else -> retryAfterFailure(context, apkFile, background, withDexMetadata)
         }
+    }
+
+    private fun isLeanback(context: Context): Boolean {
+        val pm = context.packageManager
+        return pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
+            pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)
     }
 
     private fun retryAfterFailure(context: Context, apkFile: File?, background: Boolean, withDexMetadata: Boolean) {
