@@ -92,7 +92,7 @@ object ApkInstaller {
         }
     }
 
-    /** Hands the APK to the system installer screen, used when the session install cannot be completed. */
+    /** Hands the APK to the system installer screen. Manual updates use this directly. */
     fun launchSystemInstaller(context: Context, apkFile: File) {
         val authority = "${BuildConfig.APPLICATION_ID}.fileprovider"
         val uri = FileProvider.getUriForFile(context, authority, apkFile)

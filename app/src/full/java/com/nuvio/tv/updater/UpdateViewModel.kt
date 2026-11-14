@@ -346,10 +346,23 @@ class UpdateViewModel @Inject constructor(
 
         _uiState.update { it.copy(showUnknownSourcesDialog = false) }
 
-        val updateTagFromUi = _uiState.value.update?.tag
+        val updateFromUi = _uiState.value.update
         viewModelScope.launch(Dispatchers.IO) {
-            val updateTag = updateTagFromUi
-                ?: updatePreferences.downloadedUpdate.first()?.tag
+            val saved = updatePreferences.downloadedUpdate.first()
+            val digest = updateFromUi?.assetDigest ?: saved?.digest
+            val expectedSize = updateFromUi?.assetSizeBytes
+            if (!ApkIntegrity.isIntact(context, apkFile, expectedSize, digest)) {
+                Log.w(TAG, "Refusing to open the system installer for an APK that failed integrity checks")
+                _uiState.update {
+                    it.copy(
+                        downloadedApkPath = null,
+                        errorMessage = context.getString(R.string.update_error_apk_missing),
+                        showBanner = true
+                    )
+                }
+                return@launch
+            }
+            val updateTag = updateFromUi?.tag ?: saved?.tag
             if (updateTag.isNullOrBlank()) {
                 Log.w(TAG, "No update tag for pending install; aborting")
                 return@launch
@@ -362,15 +375,21 @@ class UpdateViewModel @Inject constructor(
                     versionCode = versionCode
                 )
             )
-            runCatching { ApkInstaller.install(context, apkFile, background = false) }
-                .onFailure {
-                    Log.w(TAG, "Session install failed, falling back to the system installer", it)
-                    runCatching { ApkInstaller.launchSystemInstaller(context, apkFile) }
-                        .onFailure { error ->
-                            Log.w(TAG, "System installer failed", error)
-                            updatePreferences.clearPendingInstall()
-                        }
+            val launched = runCatching {
+                withContext(Dispatchers.Main) {
+                    ApkInstaller.launchSystemInstaller(context, apkFile)
                 }
+            }
+            launched.onFailure { error ->
+                Log.w(TAG, "System installer failed", error)
+                updatePreferences.clearPendingInstall()
+                _uiState.update {
+                    it.copy(
+                        errorMessage = error.message ?: context.getString(R.string.update_error_apk_missing),
+                        showBanner = true
+                    )
+                }
+            }
         }
     }
 
