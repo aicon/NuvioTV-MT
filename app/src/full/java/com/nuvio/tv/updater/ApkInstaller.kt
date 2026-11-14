@@ -55,12 +55,13 @@ object ApkInstaller {
             // storage. Auto keeps the update on the volume the app is already on.
             setInstallLocation(PackageInfo.INSTALL_LOCATION_AUTO)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (background) {
-                    setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
-                } else {
-                    // Manual path: force the system confirmation UI (never silent).
-                    setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_REQUIRED)
-                }
+                setRequireUserAction(
+                    if (background) {
+                        PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED
+                    } else {
+                        PackageInstaller.SessionParams.USER_ACTION_REQUIRED
+                    }
+                )
             }
         }
         val dexMetadata = if (withDexMetadata) {
@@ -104,6 +105,7 @@ object ApkInstaller {
         context.startActivity(intent)
     }
 
+    /** [PackageInstaller.Session] writes through [openWrite], not a separate file API. */
     private fun PackageInstaller.Session.writeFile(name: String, file: File) {
         file.inputStream().use { input ->
             openWrite(name, 0, file.length()).use { output ->

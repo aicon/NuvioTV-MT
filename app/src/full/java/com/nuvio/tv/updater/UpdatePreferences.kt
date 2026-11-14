@@ -37,6 +37,7 @@ class UpdatePreferences @Inject constructor(
     private val autoInstallEnabledKey = booleanPreferencesKey("auto_install_enabled")
     private val downloadedTagKey = stringPreferencesKey("downloaded_release_tag")
     private val downloadedApkPathKey = stringPreferencesKey("downloaded_apk_path")
+    private val downloadedDigestKey = stringPreferencesKey("downloaded_apk_digest")
     private val autoInstalledTagKey = stringPreferencesKey("auto_installed_release_tag")
     private val autoInstallNoticeEnabledKey = booleanPreferencesKey("auto_install_notice_enabled")
     private val pendingInstallSourceKey = stringPreferencesKey("pending_install_source")
@@ -66,11 +67,15 @@ class UpdatePreferences @Inject constructor(
         prefs[autoInstallEnabledKey] ?: false
     }
 
-    /** Release tag and APK path of the update already downloaded, if any, so it survives the app being closed. */
-    val downloadedUpdate: Flow<Pair<String, String>?> = dataStore.data.map { prefs ->
+    /** Release tag, APK path, and digest of a finished download, so it survives the app being closed. */
+    val downloadedUpdate: Flow<SavedDownload?> = dataStore.data.map { prefs ->
         val tag = prefs[downloadedTagKey]
         val path = prefs[downloadedApkPathKey]
-        if (tag != null && path != null) tag to path else null
+        if (tag != null && path != null) {
+            SavedDownload(tag = tag, path = path, digest = prefs[downloadedDigestKey])
+        } else {
+            null
+        }
     }
 
     /** Release the idle job last installed without asking, so the next launch can say the app was updated. */
@@ -140,14 +145,16 @@ class UpdatePreferences @Inject constructor(
         }
     }
 
-    suspend fun setDownloadedUpdate(tag: String?, apkPath: String?) {
+    suspend fun setDownloadedUpdate(tag: String?, apkPath: String?, digest: String? = null) {
         dataStore.edit { prefs ->
             if (tag == null || apkPath == null) {
                 prefs.remove(downloadedTagKey)
                 prefs.remove(downloadedApkPathKey)
+                prefs.remove(downloadedDigestKey)
             } else {
                 prefs[downloadedTagKey] = tag
                 prefs[downloadedApkPathKey] = apkPath
+                if (digest.isNullOrBlank()) prefs.remove(downloadedDigestKey) else prefs[downloadedDigestKey] = digest
             }
         }
     }
@@ -205,3 +212,9 @@ class UpdatePreferences @Inject constructor(
         }
     }
 }
+
+data class SavedDownload(
+    val tag: String,
+    val path: String,
+    val digest: String?
+)

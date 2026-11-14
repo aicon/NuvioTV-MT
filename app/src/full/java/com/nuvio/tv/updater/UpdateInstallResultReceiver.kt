@@ -49,26 +49,58 @@ class UpdateInstallResultReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_SUCCESS -> Unit
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 if (background) {
-                    runCatching { context.packageManager.packageInstaller.abandonSession(sessionId) }
+                    abandonSession(context, sessionId)
                     clearPending(context)
                 } else {
-                    confirmationIntent(intent)?.let { confirm ->
-                        runCatching { context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                            .onFailure {
-                                Log.w(TAG, "Install confirmation screen unavailable", it)
-                                runCatching { context.packageManager.packageInstaller.abandonSession(sessionId) }
-                                retryAfterFailure(context, apkFile, background = false, withDexMetadata = false)
-                            }
-                    }
+                    showConfirmationOrSettle(context, intent, sessionId, apkFile)
                 }
             }
-            else -> {
-                if (status == PackageInstaller.STATUS_FAILURE_ABORTED) {
-                    clearPending(context)
-                }
-                retryAfterFailure(context, apkFile, background, withDexMetadata)
-            }
+            PackageInstaller.STATUS_FAILURE_ABORTED -> clearPending(context)
+            else -> retryAfterFailure(context, apkFile, background, withDexMetadata)
         }
+    }
+
+    /**
+     * The session stays pending until it is abandoned or the system confirmation activity takes it.
+     * A missing [Intent.EXTRA_INTENT] or a failed start is logged, then the session is abandoned.
+     * [ApkInstaller.launchSystemInstaller] runs only after that abandon succeeds.
+     */
+    private fun showConfirmationOrSettle(context: Context, intent: Intent, sessionId: Int, apkFile: File?) {
+        val confirm = confirmationIntent(intent)
+        if (confirm == null) {
+            Log.w(TAG, "STATUS_PENDING_USER_ACTION without EXTRA_INTENT for session $sessionId")
+            fallbackAfterSessionSettled(context, sessionId, apkFile)
+            return
+        }
+        val started = runCatching {
+            context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+        if (started.isSuccess) return
+        Log.w(TAG, "Install confirmation screen unavailable for session $sessionId", started.exceptionOrNull())
+        fallbackAfterSessionSettled(context, sessionId, apkFile)
+    }
+
+    private fun fallbackAfterSessionSettled(context: Context, sessionId: Int, apkFile: File?) {
+        if (!abandonSession(context, sessionId)) {
+            Log.w(TAG, "Session $sessionId still pending; not starting a second installer")
+            return
+        }
+        if (apkFile == null || !apkFile.exists()) {
+            clearPending(context)
+            return
+        }
+        runCatching { ApkInstaller.launchSystemInstaller(context, apkFile) }
+            .onFailure {
+                Log.w(TAG, "System installer fallback failed for session $sessionId", it)
+                clearPending(context)
+            }
+    }
+
+    private fun abandonSession(context: Context, sessionId: Int): Boolean {
+        if (sessionId < 0) return true
+        return runCatching { context.packageManager.packageInstaller.abandonSession(sessionId) }
+            .onFailure { Log.w(TAG, "Could not abandon session $sessionId", it) }
+            .isSuccess
     }
 
     private fun clearPending(context: Context) {
@@ -98,13 +130,15 @@ class UpdateInstallResultReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun confirmationIntent(intent: Intent): Intent? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    private fun confirmationIntent(intent: Intent): Intent? {
+        // getParcelableExtra(key, Class) exists only on API 33. minSdk is 24.
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
         } else {
             @Suppress("DEPRECATION")
             intent.getParcelableExtra(Intent.EXTRA_INTENT)
         }
+    }
 
     companion object {
         private const val EXTRA_APK_PATH = "com.nuvio.tv.updater.APK_PATH"

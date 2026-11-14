@@ -32,43 +32,54 @@ class UpdateDownloadStore @Inject constructor(
         return File(updatesDir, safeName)
     }
 
-    /** Returns the already downloaded APK for this release, or null when it is missing or incomplete. */
+    /** Returns the APK only after it passes the integrity check for this release. */
     suspend fun downloadedFileFor(update: AppUpdate): File? {
-        val (tag, path) = updatePreferences.downloadedUpdate.first() ?: return null
-        if (tag != update.tag) return null
-        val file = File(path)
-        val expectedSize = update.assetSizeBytes
-        return file.takeIf { it.exists() && (expectedSize == null || it.length() == expectedSize) }
+        val saved = updatePreferences.downloadedUpdate.first() ?: return null
+        if (saved.tag != update.tag) return null
+        val file = File(saved.path)
+        val digest = update.assetDigest ?: saved.digest
+        if (!ApkIntegrity.isIntact(context, file, update.assetSizeBytes, digest)) {
+            if (file.exists()) file.delete()
+            updatePreferences.setDownloadedUpdate(null, null, null)
+            return null
+        }
+        return file
     }
 
-    /** Returns the downloaded APK when it is for a version newer than the installed one. */
+    /** Returns the downloaded APK when it is newer than the installed one and still intact. */
     suspend fun pendingInstall(): Pair<String, File>? {
-        val (tag, path) = updatePreferences.downloadedUpdate.first() ?: return null
-        val file = File(path)
-        if (!file.exists() || !VersionUtils.isRemoteNewer(tag, BuildConfig.VERSION_NAME)) return null
-        return tag to file
+        val saved = updatePreferences.downloadedUpdate.first() ?: return null
+        val file = File(saved.path)
+        if (!VersionUtils.isRemoteNewer(saved.tag, BuildConfig.VERSION_NAME)) return null
+        if (!ApkIntegrity.isIntact(context, file, expectedSize = null, digest = saved.digest)) {
+            if (file.exists()) file.delete()
+            updatePreferences.setDownloadedUpdate(null, null, null)
+            return null
+        }
+        return saved.tag to file
     }
 
     suspend fun download(
         update: AppUpdate,
         onProgress: (downloadedBytes: Long, totalBytes: Long?) -> Unit = { _, _ -> }
     ): Result<File> = downloadMutex.withLock {
-        downloadedFileFor(update)?.let { existing ->
-            val size = existing.length().coerceAtLeast(1L)
-            onProgress(size, size)
-            return@withLock Result.success(existing)
-        }
+        downloadedFileFor(update)?.let { return@withLock Result.success(it) }
         val destination = destinationFor(update)
         apkDownloader.download(
             url = update.assetUrl,
             destinationFile = destination,
             knownTotalBytes = update.assetSizeBytes,
             onProgress = onProgress
-        )
-            .onSuccess { file ->
-                updatesDir.listFiles()?.filter { it != file }?.forEach { it.delete() }
-                updatePreferences.setDownloadedUpdate(update.tag, file.absolutePath)
+        ).mapCatching { file ->
+            if (!ApkIntegrity.isIntact(context, file, update.assetSizeBytes, update.assetDigest)) {
+                file.delete()
+                error("Downloaded APK failed integrity check")
             }
+            file
+        }.onSuccess { file ->
+            updatesDir.listFiles()?.filter { it != file }?.forEach { it.delete() }
+            updatePreferences.setDownloadedUpdate(update.tag, file.absolutePath, update.assetDigest)
+        }
     }
 
     /** Drops the downloaded APK once it is installed, outdated, or no longer wanted. */
@@ -78,7 +89,7 @@ class UpdateDownloadStore @Inject constructor(
     }
 
     suspend fun clearIfInstalled() {
-        val (tag, _) = updatePreferences.downloadedUpdate.first() ?: return
-        if (!VersionUtils.isRemoteNewer(tag, BuildConfig.VERSION_NAME)) clear()
+        val saved = updatePreferences.downloadedUpdate.first() ?: return
+        if (!VersionUtils.isRemoteNewer(saved.tag, BuildConfig.VERSION_NAME)) clear()
     }
 }

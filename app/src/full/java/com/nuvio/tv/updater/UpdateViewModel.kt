@@ -257,6 +257,20 @@ class UpdateViewModel @Inject constructor(
         val update = _uiState.value.update ?: return
 
         viewModelScope.launch {
+            val existing = withContext(Dispatchers.IO) { downloadStore.downloadedFileFor(update) }
+            if (existing != null) {
+                _uiState.update {
+                    it.copy(
+                        isDownloading = false,
+                        downloadProgress = null,
+                        downloadedApkPath = existing.absolutePath,
+                        errorMessage = null,
+                        showBanner = true
+                    )
+                }
+                return@launch
+            }
+
             _uiState.update {
                 it.copy(
                     isDownloading = true,
@@ -293,10 +307,10 @@ class UpdateViewModel @Inject constructor(
                             isDownloading = false,
                             downloadProgress = null,
                             downloadedApkPath = file.absolutePath,
-                            errorMessage = null
+                            errorMessage = null,
+                            showBanner = true
                         )
                     }
-                    installUpdateOrRequestPermission()
                 }
                 .onFailure { error ->
                     _uiState.update {
@@ -331,14 +345,11 @@ class UpdateViewModel @Inject constructor(
         }
 
         _uiState.update { it.copy(showUnknownSourcesDialog = false) }
-        // Notification channel / permission while still in foreground — post-install open may need it.
-        UpdateReadyNotifier.ensureChannel(context)
-        UpdateReadyNotifier.canNotify(context)
 
         val updateTagFromUi = _uiState.value.update?.tag
         viewModelScope.launch(Dispatchers.IO) {
             val updateTag = updateTagFromUi
-                ?: updatePreferences.downloadedUpdate.first()?.first
+                ?: updatePreferences.downloadedUpdate.first()?.tag
             if (updateTag.isNullOrBlank()) {
                 Log.w(TAG, "No update tag for pending install; aborting")
                 return@launch

@@ -7,5 +7,7 @@ data class AppUpdate(
     val releaseUrl: String?,
     val assetName: String,
     val assetUrl: String,
-    val assetSizeBytes: Long?
+    val assetSizeBytes: Long?,
+    /** GitHub asset digest (`sha256:<hex>`), when the release publishes one. */
+    val assetDigest: String? = null
 )

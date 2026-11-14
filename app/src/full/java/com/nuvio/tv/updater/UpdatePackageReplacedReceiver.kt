@@ -71,7 +71,7 @@ class UpdatePackageReplacedReceiver : BroadcastReceiver() {
                 Log.i(TAG, "Idle update ${pending.tag} recorded for next-launch notice")
             }
             PendingUpdateInstall.Source.MANUAL -> {
-                UpdatePostInstallContinuation.onManualUpdateInstalled(context, pending.tag)
+                Log.i(TAG, "Manual update ${pending.tag} installed; not relaunching from the background")
             }
         }
     }
