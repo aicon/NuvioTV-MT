@@ -195,18 +195,12 @@ jobs:
         if: steps.version.outputs.exists != 'true'
         env:
           RELEASE_VERSION: ${{ steps.version.outputs.version }}
-          RELEASE_CODE: ${{ steps.version.outputs.code }}
-          RELEASE_TITLE: ${{ steps.version.outputs.title }}
         run: |
           set -eu
           subject="$(git log -1 --format='%s')"
           body="$(git log -1 --format='%b' | sed '/^$/d' | head -n 8)"
           sha="$(git rev-parse --short HEAD)"
           {
-            echo "# ${RELEASE_TITLE}"
-            echo
-            echo "\`com.aicon.nuviotv\` · versionCode \`${RELEASE_CODE}\` · **armeabi-v7a only** (test build)."
-            echo
             echo "## Changes"
             echo
             echo "- ${subject} (\`${sha}\`)"
