@@ -53,7 +53,11 @@ class UpdateDownloadStore @Inject constructor(
         update: AppUpdate,
         onProgress: (downloadedBytes: Long, totalBytes: Long?) -> Unit = { _, _ -> }
     ): Result<File> = downloadMutex.withLock {
-        downloadedFileFor(update)?.let { return@withLock Result.success(it) }
+        downloadedFileFor(update)?.let { existing ->
+            val size = existing.length().coerceAtLeast(1L)
+            onProgress(size, size)
+            return@withLock Result.success(existing)
+        }
         val destination = destinationFor(update)
         apkDownloader.download(
             url = update.assetUrl,

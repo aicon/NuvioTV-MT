@@ -92,9 +92,15 @@ class UpdateJobService : JobService() {
         if (!VersionUtils.isRemoteNewer(update.tag, BuildConfig.VERSION_NAME)) return
         if (update.tag == preferences.ignoredTag.first()) return
 
-        downloadStore.download(update).getOrThrow()
-        Log.d(TAG, "Downloaded ${update.tag} in the background")
-        if (autoInstallEnabled) scheduleIdleInstall(applicationContext)
+        // Silent/preemptive download only when automatic install is on. Otherwise the user must
+        // start Download from the banner so progress is visible (no silent download).
+        if (autoInstallEnabled) {
+            downloadStore.download(update).getOrThrow()
+            Log.d(TAG, "Downloaded ${update.tag} in the background for auto-install")
+            scheduleIdleInstall(applicationContext)
+        } else {
+            Log.d(TAG, "Update ${update.tag} available; waiting for user-started download")
+        }
     }
 
     private suspend fun installDownloaded(entryPoint: UpdateJobEntryPoint) {

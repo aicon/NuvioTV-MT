@@ -265,32 +265,20 @@ class UpdateViewModel @Inject constructor(
                 )
             }
 
-            val knownTotal = update.assetSizeBytes
+            val knownTotal = update.assetSizeBytes?.takeIf { it > 0 }
             var lastPostedProgress = -1f
             var lastPostedAtMs = 0L
             val result = withContext(Dispatchers.IO) {
                 downloadStore.download(update) { downloaded, total ->
-                    val denom = when {
-                        total != null && total > 0 -> total
-                        knownTotal != null && knownTotal > 0 -> knownTotal
-                        else -> null
-                    }
-                    val progress = if (denom != null) {
-                        (downloaded.toFloat() / denom.toFloat()).coerceIn(0f, 1f)
-                    } else {
-                        null
-                    }
-                    if (progress == null) {
-                        if (_uiState.value.downloadProgress != null) {
-                            _uiState.update { it.copy(downloadProgress = null) }
-                        }
-                        return@download
-                    }
+                    val denom = total?.takeIf { it > 0 } ?: knownTotal
+                    val progress = denom?.let { (downloaded.toFloat() / it.toFloat()).coerceIn(0f, 1f) }
+                        ?: return@download
                     val now = System.currentTimeMillis()
-                    val stepped = progress >= 0.999f ||
-                        lastPostedProgress < 0f ||
-                        progress - lastPostedProgress >= 0.01f ||
-                        now - lastPostedAtMs >= 200L
+                    // Publish first sample, ~0.5% steps, every 100ms, and completion — never stay stuck at 0.
+                    val stepped = lastPostedProgress < 0f ||
+                        progress - lastPostedProgress >= 0.005f ||
+                        now - lastPostedAtMs >= 100L ||
+                        progress >= 0.999f
                     if (!stepped) return@download
                     lastPostedProgress = progress
                     lastPostedAtMs = now

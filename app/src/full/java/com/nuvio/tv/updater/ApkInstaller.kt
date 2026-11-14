@@ -7,13 +7,15 @@ import android.content.pm.PackageInstaller
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.core.content.FileProvider
 import com.nuvio.tv.BuildConfig
 import java.io.File
 
+/**
+ * Matches upstream NuvioTV: silent [USER_ACTION_NOT_REQUIRED] only for idle/background self-updates.
+ * Manual installs must require user action so the system installer UI stays in the foreground.
+ */
 object ApkInstaller {
-    private const val TAG = "ApkInstaller"
 
     fun canRequestPackageInstalls(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -36,9 +38,9 @@ object ApkInstaller {
 
     /**
      * Installs [apkFile] as an update of this app through a PackageInstaller session, adding the APK's own dex
-     * metadata so the new version is compiled at install time. On Android 12+ self-updates request
-     * [PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED] (permission declared); the system may still
-     * require confirmation. Status callbacks go to [UpdateInstallResultReceiver] — not used as a relaunch path.
+     * metadata so the new version is compiled at install time. A [background] install asks the system to skip the
+     * confirmation screen, which Android 12+ allows for an app updating itself; elsewhere the system still asks.
+     * The outcome arrives in [UpdateInstallResultReceiver].
      */
     fun install(
         context: Context,
@@ -46,9 +48,6 @@ object ApkInstaller {
         background: Boolean,
         withDexMetadata: Boolean = true
     ) {
-        // Best-effort: register relaunch PI while we may still be foreground (manual path).
-        UpdateLaunchIntents.prepareRelaunchPendingIntent(context)
-
         val packageInstaller = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
             setAppPackageName(context.packageName)
@@ -56,8 +55,12 @@ object ApkInstaller {
             // storage. Auto keeps the update on the volume the app is already on.
             setInstallLocation(PackageInfo.INSTALL_LOCATION_AUTO)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // Self-update UX: skip confirm when the OS allows it. Does not keep the process alive.
-                setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+                if (background) {
+                    setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+                } else {
+                    // Manual path: force the system confirmation UI (never silent).
+                    setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_REQUIRED)
+                }
             }
         }
         val dexMetadata = if (withDexMetadata) {
@@ -80,7 +83,6 @@ object ApkInstaller {
                     ).intentSender
                 )
             }
-            Log.i(TAG, "Committed session $sessionId background=$background")
         } catch (e: Exception) {
             packageInstaller.abandonSession(sessionId)
             throw e
@@ -91,7 +93,6 @@ object ApkInstaller {
 
     /** Hands the APK to the system installer screen, used when the session install cannot be completed. */
     fun launchSystemInstaller(context: Context, apkFile: File) {
-        UpdateLaunchIntents.prepareRelaunchPendingIntent(context)
         val authority = "${BuildConfig.APPLICATION_ID}.fileprovider"
         val uri = FileProvider.getUriForFile(context, authority, apkFile)
 

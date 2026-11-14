@@ -35,6 +35,7 @@ class ApkDownloader @Inject constructor(
 
                 val body = response.body ?: error("Empty download body")
                 val total = body.contentLength().takeIf { it > 0 }
+                    ?: response.header("Content-Length")?.toLongOrNull()?.takeIf { it > 0 }
                     ?: knownTotalBytes?.takeIf { it > 0 }
 
                 body.byteStream().use { input ->
