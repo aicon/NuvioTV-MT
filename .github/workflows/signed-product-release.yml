@@ -164,9 +164,9 @@ jobs:
           PY
           keytool -list -keystore "${keystore_path}" -storepass "${RELEASE_STORE_PASSWORD}" >/dev/null
 
-      - name: Build armeabi-v7a only
+      - name: Build all ABIs
         if: steps.version.outputs.exists != 'true'
-        run: ./gradlew :app:assembleFullRelease -PonlyAbis=armeabi-v7a --stacktrace
+        run: ./gradlew :app:assembleFullRelease --stacktrace
 
       - name: Rename APKs for release
         if: steps.version.outputs.exists != 'true'
@@ -175,16 +175,16 @@ jobs:
         run: |
           set -eu
           outdir="app/build/outputs/apk/full/release"
-          mapfile -t apks < <(find "${outdir}" -maxdepth 1 -type f -name '*armeabi-v7a*.apk' -print | sort)
+          mapfile -t apks < <(find "${outdir}" -maxdepth 1 -type f -name '*.apk' -print | sort)
           if (( ${#apks[@]} == 0 )); then
-            echo "No armeabi-v7a release APK was produced." >&2
-            find "${outdir}" -maxdepth 1 -type f -name '*.apk' -print >&2 || true
+            echo "No release APK was produced." >&2
             exit 1
           fi
-          # Drop any non-v7a artifacts left in the output dir.
-          find "${outdir}" -maxdepth 1 -type f -name '*.apk' ! -name '*armeabi-v7a*' -delete
           for apk in "${apks[@]}"; do
             base="$(basename "${apk}")"
+            case "${base}" in
+              NuvioTV-MT-*) continue ;;
+            esac
             rest="${base#app-}"
             dest="${outdir}/NuvioTV-MT-${RELEASE_VERSION}-${rest}"
             mv "${apk}" "${dest}"
@@ -211,8 +211,11 @@ jobs:
             echo
             echo "## Install"
             echo
-            echo "- APK: \`NuvioTV-MT-${RELEASE_VERSION}-full-armeabi-v7a-release.apk\`"
-            echo "- 32-bit Android TV / devices only while testing; other ABIs are not published in this release."
+            echo "The universal APK installs on every CPU. The other files are smaller splits for one ABI."
+            echo
+            find app/build/outputs/apk/full/release -maxdepth 1 -type f -name 'NuvioTV-MT-*.apk' -print | sort | while read -r apk; do
+              echo "- \`$(basename "${apk}")\`"
+            done
             echo
           } > release-notes.md
 
