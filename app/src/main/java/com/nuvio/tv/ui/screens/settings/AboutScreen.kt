@@ -4,8 +4,6 @@ package com.nuvio.tv.ui.screens.settings
 
 import com.nuvio.tv.ui.theme.NuvioTheme
 
-import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.BringIntoViewSpec
@@ -22,7 +20,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -35,7 +32,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -72,8 +68,8 @@ fun AboutSettingsContent(
     onNavigateToLicensesAttributions: () -> Unit = {},
     initialFocusRequester: FocusRequester? = null
 ) {
-    val context = LocalContext.current
     val aboutScrollState = rememberScrollState()
+    var showPrivacyPolicy by remember { mutableStateOf(false) }
     var firstRowFocused by remember { mutableStateOf(false) }
     val firstRowModifier = Modifier.onFocusChanged { firstRowFocused = it.isFocused }
     val defaultBringIntoViewSpec = LocalBringIntoViewSpec.current
@@ -147,7 +143,7 @@ fun AboutSettingsContent(
                             SettingsActionRow(
                                 title = stringResource(R.string.about_privacy_policy),
                                 subtitle = stringResource(R.string.about_privacy_policy_subtitle),
-                                trailingIcon = Icons.Default.OpenInNew,
+                                trailingIcon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 modifier = if (!AppFeaturePolicy.inAppUpdatesEnabled) {
                                     firstRowModifier.then(
                                         if (initialFocusRequester != null) Modifier.focusRequester(initialFocusRequester)
@@ -156,13 +152,7 @@ fun AboutSettingsContent(
                                 } else {
                                     Modifier
                                 },
-                                onClick = {
-                                    val intent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        Uri.parse("https://nuvio.tv/privacy-policy")
-                                    )
-                                    context.startActivity(intent)
-                                }
+                                onClick = { showPrivacyPolicy = true }
                             )
 
                             if (AppFeaturePolicy.supportNuvioEnabled) {
@@ -185,6 +175,9 @@ fun AboutSettingsContent(
                 }
                 SettingsVerticalScrollIndicators(state = aboutScrollState)
             }
+        }
+        if (showPrivacyPolicy) {
+            PrivacyPolicyDialog(onDismiss = { showPrivacyPolicy = false })
         }
     }
 }

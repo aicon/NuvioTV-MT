@@ -427,6 +427,7 @@
     <string name="update_channel_beta_description">Korai frissítések, amelyek hibákat tartalmazhatnak. Egyes funkciók hibásan vagy váratlanul működhetnek, illetve leállhatnak.</string>
     <string name="about_privacy_policy">Adatvédelmi irányelvek</string>
     <string name="about_privacy_policy_subtitle">Adatvédelmi irányelvek megtekintése</string>
+    <string name="about_privacy_policy_unavailable">Az adatvédelmi irányelvek nem nyíltak meg az alkalmazásban. Cím: %1$s</string>
     <string name="support_nuvio_name">Nuvio támogatása</string>
     <string name="about_supporters_contributors">Nuvio támogatása</string>
     <string name="about_supporters_contributors_subtitle">Támogasd a projektet, és nézd meg a közösségi közreműködőket</string>
@@ -477,7 +478,7 @@
     <string name="settings_integration">Integrációk</string>
     <string name="settings_playback">Lejátszás</string>
     <string name="settings_trakt_subtitle">Trakt kapcsolat beállítása.</string>
-    <string name="settings_tracking_title">Követés</string>
+    <string name="settings_tracking_title">Aktivitáskövetés</string>
     <string name="settings_tracking_description">Csatlakoztass követési szolgáltatásokat, és válaszd ki, melyik biztosítsa a Könyvtár és a Megtekintés folytatása adatait.</string>
     <string name="tracking_accounts_title">Fiókok</string>
     <string name="tracking_accounts_subtitle">Követési szolgáltatások csatlakoztatása és kezelése</string>
@@ -1254,7 +1255,7 @@
     <string name="mdblist_enable_subtitle">Értékelések lekérése külső szolgáltatóktól a részletek képernyőn</string>
     <string name="mdblist_api_key_title">API-kulcs</string>
     <string name="mdblist_api_key_subtitle">Szükséges az értékelések lekéréséhez az MDBList-ről</string>
-    <string name="mdblist_ratings_credentials_subtitle">Használd a Követés menüben csatlakoztatott MDBList-fiókodat, vagy adj meg külön API-kulcsot az értékelésekhez.</string>
+    <string name="mdblist_ratings_credentials_subtitle">Használd az Aktivitáskövetés menüben csatlakoztatott MDBList-fiókodat, vagy adj meg külön API-kulcsot az értékelésekhez.</string>
     <string name="mdblist_ratings_connected_account">Csatlakoztatott fiók használata</string>
     <string name="mdblist_ratings_key_override_subtitle">Az értékelések lekéréséhez a megadott API-kulcsot használja a csatlakoztatott fiók helyett. Töröld a kulcsot, ha ismét a fiókot szeretnéd használni.</string>
     <string name="mdblist_trakt_title">Trakt</string>

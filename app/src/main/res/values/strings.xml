@@ -428,6 +428,7 @@
     <string name="update_channel_beta_description">Early updates that may contain bugs, break features, or behave unexpectedly.</string>
     <string name="about_privacy_policy">Privacy Policy</string>
     <string name="about_privacy_policy_subtitle">View our privacy policy</string>
+    <string name="about_privacy_policy_unavailable">The privacy policy could not be opened inside the app. Address: %1$s</string>
     <string name="support_nuvio_name">Support Nuvio</string>
     <string name="about_supporters_contributors">Support Nuvio</string>
     <string name="about_supporters_contributors_subtitle">Support the project and view community credits</string>
@@ -478,7 +479,7 @@
     <string name="settings_integration">Integrations</string>
     <string name="settings_playback">Playback</string>
     <string name="settings_trakt_subtitle">Open Trakt connection screen</string>
-    <string name="settings_tracking_title">Tracking</string>
+    <string name="settings_tracking_title">Activity tracking</string>
     <string name="settings_tracking_description">Connect tracking providers and choose which one powers your Library and Continue Watching.</string>
     <string name="tracking_accounts_title">Accounts</string>
     <string name="tracking_accounts_subtitle">Connect and manage tracking services</string>
