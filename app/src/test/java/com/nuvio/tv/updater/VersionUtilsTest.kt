@@ -39,4 +39,15 @@ class VersionUtilsTest {
     fun `current beta naming is recognized as prerelease`() {
         assertTrue(VersionUtils.isPrerelease("0.8.12-beta"))
     }
+
+    @Test
+    fun `fourth segment sorts after its upstream release and before the next patch`() {
+        assertTrue(VersionUtils.isRemoteNewer("1.1.0.01", "1.1.0"))
+        assertTrue(VersionUtils.isRemoteNewer("1.1.0.02", "1.1.0.01"))
+        assertTrue(VersionUtils.isRemoteNewer("1.1.1", "1.1.0.02"))
+        assertTrue(VersionUtils.isRemoteNewer("1.1.1.01", "1.1.1"))
+        assertFalse(VersionUtils.isRemoteNewer("1.1.0", "1.1.0.01"))
+        assertFalse(VersionUtils.isPrerelease("1.1.0.01"))
+        assertFalse(VersionUtils.isRemoteNewer("1.1.0.01", "1.1.0.1"))
+    }
 }

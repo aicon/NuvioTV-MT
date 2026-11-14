@@ -4,12 +4,15 @@ internal data class SemanticVersion(
     val major: Long,
     val minor: Long,
     val patch: Long,
+    val revision: Long = 0,
     val prerelease: List<String>
 ) : Comparable<SemanticVersion> {
     override fun compareTo(other: SemanticVersion): Int {
         compareValues(major, other.major).takeIf { it != 0 }?.let { return it }
         compareValues(minor, other.minor).takeIf { it != 0 }?.let { return it }
         compareValues(patch, other.patch).takeIf { it != 0 }?.let { return it }
+        // Fourth segment is our own build after an upstream X.Y.Z: 1.1.0 < 1.1.0.01 < 1.1.1.
+        compareValues(revision, other.revision).takeIf { it != 0 }?.let { return it }
 
         if (prerelease.isEmpty() && other.prerelease.isEmpty()) return 0
         if (prerelease.isEmpty()) return 1
@@ -46,6 +49,7 @@ internal data class SemanticVersion(
 internal object VersionUtils {
     private val versionPattern = Regex(
         "^(\\d+)\\.(\\d+)\\.(\\d+)" +
+            "(?:\\.(\\d+))?" +
             "(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?" +
             "(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     )
@@ -61,7 +65,8 @@ internal object VersionUtils {
             major = match.groupValues[1].toLongOrNull() ?: return null,
             minor = match.groupValues[2].toLongOrNull() ?: return null,
             patch = match.groupValues[3].toLongOrNull() ?: return null,
-            prerelease = match.groupValues[4]
+            revision = match.groupValues[4].toLongOrNull() ?: 0L,
+            prerelease = match.groupValues[5]
                 .takeIf(String::isNotEmpty)
                 ?.split('.')
                 .orEmpty()
